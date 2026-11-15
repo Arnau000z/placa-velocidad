@@ -38,7 +38,21 @@ ap = argparse.ArgumentParser()
 ap.add_argument("--ciegas", action="store_true")
 ap.add_argument("--v4", action="store_true")
 ap.add_argument("--paralelo-api", type=int, default=5)
+ap.add_argument("--sufijo", default="", help="sufijo de salida (p. ej. b → sft_masivo_b, sft_codigo_v4b) para no pisar la v4 entregada")
+ap.add_argument("--solo-cache", action="store_true", help="a ciegas solo con lo ya resuelto, sin peticiones nuevas")
 args = ap.parse_args()
+SUF = f"_{args.sufijo}" if args.sufijo else ""
+
+def calcula(code):
+    """Un programa que entrena: no imprime una constante pura (print(48), o x = 48 y print(x) sin ninguna operación).
+    Los de una línea que sí calculan, como print(36 // 3 - 36 // 4), valen: en la placa lo corto es oro."""
+    lineas = [ln for ln in str(code).splitlines() if ln.strip()]
+    if not lineas:
+        return False
+    literal = re.compile(r"""^\s*print\(\s*(-?\d+(\.\d+)?|"[^"]*"|'[^']*')\s*\)\s*$""")
+    resto = " ".join(ln for ln in lineas if not literal.match(ln)).replace("print(", "(")
+    return bool(re.search(r"[-+*/%<>]|\bfor\b|\bwhile\b|\bif\b|\w\(|\[", resto))
+
 
 # SYSTEM y PRELUDIO idénticos a los del entrenamiento (sin importar verificar_sintetico.py, que se ejecuta al importarlo)
 _arbol = ast.parse(open(os.path.join(HERE, "verificar_sintetico.py"), encoding="utf-8").read())
@@ -120,6 +134,9 @@ for p in sorted(glob.glob(os.path.join(HERE, "generado_masivo", "*.jsonl"))):
         if code.count("\n") > 11 or len(code) > 600 or "print(" not in code:
             stats["codigo_largo_o_sin_print"] += 1
             continue
+        if not calcula(code):
+            stats["constante"] += 1
+            continue
         r.update(options=o, code=code)
         cand.append(r)
 
@@ -153,8 +170,15 @@ if args.ciegas:
                                              {"Content-Type": "application/json", "Authorization": f"Bearer {KEY}"})
                 with urllib.request.urlopen(req, timeout=300) as rr:
                     text = json.load(rr)["choices"][0]["message"]["content"]
+                codes = []
                 m = re.search(r"\[.*\]", text, re.S)
-                codes = json.loads(m.group(0)) if m else []
+                if m:
+                    try:
+                        codes = json.loads(m.group(0))
+                    except json.JSONDecodeError:
+                        codes = []
+                if len(codes) != len(lote):  # qwen3.6 a veces contesta con un bloque ```python por problema
+                    codes = re.findall(r"```(?:python)?\s*\n(.*?)```", text, re.S)
                 return [str(c) for c in codes] if len(codes) == len(lote) else [None] * len(lote)
             except urllib.error.HTTPError as exc:
                 if exc.code in (401, 402, 403):
@@ -164,24 +188,47 @@ if args.ciegas:
                 time.sleep(5 * (intento + 1))
         return [None] * len(lote)
 
+    # caché de lo ya resuelto a ciegas (para no repetir peticiones al volver a pasar el verificador)
+    CACHE = os.path.join(HERE, "ciegas_cache.jsonl")
+    cache = {}
+    if os.path.exists(CACHE):
+        for l in open(CACHE, encoding="utf-8"):
+            if l.strip():
+                d = json.loads(l)
+                cache[d["h"]] = d["code"]
+    elif os.path.exists(os.path.join(HERE, "limpio_masivo.jsonl")):
+        for l in open(os.path.join(HERE, "limpio_masivo.jsonl"), encoding="utf-8"):
+            if l.strip():
+                d = json.loads(l)
+                if d.get("ciegas"):
+                    cache[huella(d["text"])] = d["code"]
+        with open(CACHE, "w", encoding="utf-8") as f:
+            for h, c in cache.items():
+                f.write(json.dumps({"h": h, "code": c}, ensure_ascii=False) + "\n")
+    pendientes = [r for r in buenos if huella(r["text"]) not in cache]
+    print(f"   a ciegas: {len(buenos) - len(pendientes)} ya resueltos (caché), {len(pendientes)} nuevos", flush=True)
     por_modelo = {}
-    for r in buenos:
-        por_modelo.setdefault(RESOLVER.get(r.get("generador"), "qwen3.6"), []).append(r)
-    lotes = [[(m, r) for r in rs[i:i + 8]] for m, rs in por_modelo.items() for i in range(0, len(rs), 8)]
+    for i, r in enumerate(pendientes):
+        g = r.get("generador")
+        m = RESOLVER.get(g, "qwen3.6") if g in ("qwen3.6", "gemma4") else ("gemma4" if i % 2 else "qwen3.6")
+        por_modelo.setdefault(m, []).append(r)
+    lotes = [] if args.solo_cache else [[(m, r) for r in rs[i:i + 8]] for m, rs in por_modelo.items() for i in range(0, len(rs), 8)]
     random.Random(0).shuffle(lotes)
     t0 = time.time()
-    resultados = {}
-    with cf.ThreadPoolExecutor(args.paralelo_api * len(por_modelo)) as ex:
+    with cf.ThreadPoolExecutor(max(1, args.paralelo_api * len(por_modelo))) as ex:
         futs = {ex.submit(resolver, lote): lote for lote in lotes}
         for k, fut in enumerate(cf.as_completed(futs), 1):
-            for (_, r), c in zip(futs[fut], fut.result()):
-                resultados[id(r)] = c
+            with open(CACHE, "a", encoding="utf-8") as fc:
+                for (_, r), c in zip(futs[fut], fut.result()):
+                    if c:
+                        cache[huella(r["text"])] = c
+                        fc.write(json.dumps({"h": huella(r["text"]), "code": c}, ensure_ascii=False) + "\n")
             if k % 50 == 0:
                 print(f"   a ciegas: {k}/{len(lotes)} lotes, {time.time() - t0:.0f} s", flush=True)
     st2 = Counter()
 
     def comprobar(r):
-        c = resultados.get(id(r))
+        c = cache.get(huella(r["text"]))
         if not c:
             return r, None, None
         c = limpiar_codigo(c)
@@ -196,8 +243,11 @@ if args.ciegas:
             if le == r["label"]:
                 st2["coincide"] += 1
                 r["ciegas"] = True
-                if len(c) < len(r["code"]) and c.count("\n") <= 11:
+                if calcula(c) and len(c) < len(r["code"]) and c.count("\n") <= 11:
                     r["code"] = c
+                if not calcula(r["code"]):
+                    st2["coincide_pero_constante"] += 1
+                    continue
                 dobles.append(r)
             else:
                 st2["no_coincide"] += 1
@@ -207,14 +257,14 @@ else:
     finales = buenos
 
 # --- salida -----------------------------------------------------------------------------------------------------
-with open(os.path.join(HERE, "limpio_masivo.jsonl"), "w", encoding="utf-8", newline="\n") as f:
+with open(os.path.join(HERE, f"limpio_masivo{SUF}.jsonl"), "w", encoding="utf-8", newline="\n") as f:
     for i, r in enumerate(finales):
         r["id"] = f"mas_{i:05d}"
         f.write(json.dumps({k: r.get(k) for k in ("id", "language", "level", "type", "foco", "generador", "ciegas", "text", "options", "label", "code")},
                            ensure_ascii=False) + "\n")
 tr = va = 0
-with open(os.path.join(DATOS, "sft_masivo.jsonl"), "w", encoding="utf-8", newline="\n") as ft, \
-        open(os.path.join(DATOS, "sft_masivo_val.jsonl"), "w", encoding="utf-8", newline="\n") as fv:
+with open(os.path.join(DATOS, f"sft_masivo{SUF}.jsonl"), "w", encoding="utf-8", newline="\n") as ft, \
+        open(os.path.join(DATOS, f"sft_masivo{SUF}_val.jsonl"), "w", encoding="utf-8", newline="\n") as fv:
     for r in finales:
         row = {"messages": [{"role": "system", "content": SYSTEM}, {"role": "user", "content": formato(r)},
                             {"role": "assistant", "content": f"```python\n{r['code']}\n```"}]}
@@ -230,19 +280,26 @@ print(f"sft_masivo: {tr} train, {va} val · por foco {dict(Counter(r.get('foco')
 
 if args.v4:
     filas, hs = [], set()
-    for nombre in ("sft_codigo_v3.jsonl", "sft_masivo.jsonl"):
+    constantes = Counter()
+    for nombre in ("sft_codigo_v3.jsonl", f"sft_masivo{SUF}.jsonl"):
         for l in open(os.path.join(DATOS, nombre), encoding="utf-8"):
             if not l.strip():
                 continue
-            h = hashlib.sha1(json.loads(l)["messages"][1]["content"].encode()).hexdigest()
+            msgs = json.loads(l)["messages"]
+            if not calcula(limpiar_codigo(msgs[2]["content"])):  # fuera los que imprimen una constante, también en v3
+                constantes[nombre] += 1
+                continue
+            h = hashlib.sha1(msgs[1]["content"].encode()).hexdigest()
             if h not in hs:
                 hs.add(h)
                 filas.append(l.rstrip("\n"))
-    with open(os.path.join(DATOS, "sft_codigo_v4.jsonl"), "w", encoding="utf-8", newline="\n") as f:
+    print(f"constantes quitadas: {dict(constantes)}")
+    with open(os.path.join(DATOS, f"sft_codigo_v4{args.sufijo}.jsonl"), "w", encoding="utf-8", newline="\n") as f:
         f.write("\n".join(filas) + "\n")
     vs = []
-    for nombre in ("sft_codigo_v3_val.jsonl", "sft_masivo_val.jsonl"):
-        vs += [l.rstrip("\n") for l in open(os.path.join(DATOS, nombre), encoding="utf-8") if l.strip()]
-    with open(os.path.join(DATOS, "sft_codigo_v4_val.jsonl"), "w", encoding="utf-8", newline="\n") as f:
+    for nombre in ("sft_codigo_v3_val.jsonl", f"sft_masivo{SUF}_val.jsonl"):
+        vs += [l.rstrip("\n") for l in open(os.path.join(DATOS, nombre), encoding="utf-8")
+               if l.strip() and calcula(limpiar_codigo(json.loads(l)["messages"][2]["content"]))]
+    with open(os.path.join(DATOS, f"sft_codigo_v4{args.sufijo}_val.jsonl"), "w", encoding="utf-8", newline="\n") as f:
         f.write("\n".join(vs) + "\n")
-    print(f"sft_codigo_v4: {len(filas)} train, {len(vs)} val")
+    print(f"sft_codigo_v4{args.sufijo}: {len(filas)} train, {len(vs)} val")
