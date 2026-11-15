@@ -4,7 +4,7 @@
     python3 predict.py --input problems.jsonl --output predictions.csv [--url http://127.0.0.1:8080] [--limite 56]
 
 Por problema (≤ 60 s, sin red), con el 1.7B en llama-server (prefijo de sistema cacheado):
-  0. ¿Es un duplicado de train con las mismas opciones? → su etiqueta (huella: números del enunciado + opciones), 0 s.
+  0. ¿Es un duplicado de train con las mismas opciones? → su etiqueta (mismas 5 opciones y enunciado parecido), ~2 ms.
   1. Programa Python corto (presupuesto de tokens calculado con la velocidad real medida al vuelo), ejecutado con límites
      de memoria y tiempo; si imprime un valor que casa con una opción → esa letra.
   2. Si no casa y queda tiempo → el valor razonado (Final answer) y casado.
@@ -106,17 +106,19 @@ def extract_code(text):
 class LLM:
     def __init__(self, url, tps_forzado=None):
         self.url = url.rstrip("/")
-        self.tps_in, self.tps_out = 4.0, 2.5  # se afinan con los timings reales de cada respuesta
+        self.tps_in, self.tps_out = 4.6, 2.7  # medido en la UNO Q con el 1.7B Q4_0 (15/11); se afinan con los timings reales
         self.forzado = tps_forzado  # (leer, escribir) para SIMULAR la placa desde el PC: fija las velocidades y suma el tiempo estimado
         if tps_forzado:
             self.tps_in, self.tps_out = tps_forzado
         self.simulado = 0.0  # segundos de placa estimados en el problema actual
         self.cacheado = 0  # tokens ya en caché dentro del problema actual (simulación)
 
-    def chat(self, msgs, max_tokens, grammar=None, timeout=58):
-        payload = {"messages": msgs, "max_tokens": max_tokens, "temperature": 0, "seed": 42, "cache_prompt": True}
+    def chat(self, msgs, max_tokens, grammar=None, timeout=58, stop=None, temperature=0.0, seed=42):
+        payload = {"messages": msgs, "max_tokens": max_tokens, "temperature": temperature, "seed": seed, "cache_prompt": True}
         if grammar:
             payload["grammar"] = grammar
+        if stop:
+            payload["stop"] = stop
         req = urllib.request.Request(self.url + "/v1/chat/completions", json.dumps(payload).encode(), {"Content-Type": "application/json"})
         with urllib.request.urlopen(req, timeout=timeout) as r:
             d = json.load(r)
@@ -135,11 +137,27 @@ class LLM:
                 self.tps_out = 0.7 * self.tps_out + 0.3 * t["predicted_per_second"]
         return d["choices"][0]["message"]["content"], d.get("usage", {})
 
-    def warm(self):
+    def warm(self, espera=300):
+        """Espera a que el servidor responda /health y deja el prompt de sistema en la caché (la 1.ª lectura en frío tarda >60 s)."""
+        t0 = time.time()
+        while time.time() - t0 < espera:
+            try:
+                with urllib.request.urlopen(self.url + "/health", timeout=5) as r:
+                    if b"ok" in r.read():
+                        break
+            except Exception:
+                time.sleep(2)
+        tps = (self.tps_in, self.tps_out)
         try:
-            self.chat([{"role": "system", "content": SYSTEM_CODE}, {"role": "user", "content": "1 + 1 = ?\nA) 1\nB) 2\nC) 3\nD) 4\nE) 5"}], 8)
+            forzado, self.forzado = self.forzado, None  # el calentamiento no cuenta como tiempo de problema
+            self.chat([{"role": "system", "content": SYSTEM_CODE}, {"role": "user", "content": "1 + 1 = ?\nA) 1\nB) 2\nC) 3\nD) 4\nE) 5"}], 1,
+                      grammar="root ::= [A-E]", timeout=240)
         except Exception:
             pass
+        finally:
+            self.forzado = forzado
+            if forzado:
+                self.tps_in, self.tps_out = tps
 
 
 def run_code(code, segundos, mem_mb=256):
@@ -167,107 +185,235 @@ def run_code(code, segundos, mem_mb=256):
 
 
 # ----------------------------------------------------------------------------- duplicados de train
-def huella(pr):
-    nums = tuple(re.findall(r"\d+(?:[.,]\d+)?", pr.get("text", "")))
+NUM_INICIAL = re.compile(r"^\s*\d+\s*[.):-]\s*")
+
+
+def _texto_dup(t):
+    """Enunciado sin el número del problema (cambia entre niveles), sin acentos y solo letras y cifras."""
+    import unicodedata
+    t = unicodedata.normalize("NFKD", NUM_INICIAL.sub("", t or "").lower())
+    t = "".join(c for c in t if not unicodedata.combining(c))
+    return re.sub(r"[^a-z0-9]+", " ", t).strip()
+
+
+def _opciones_dup(pr):
     o = pr.get("options") or {}
-    opts = tuple(norm_text(o.get(k, "")) for k in LETTERS)
-    return nums, opts
+    if len(o) != 5:
+        return None
+    t = tuple(norm_text(o.get(k, "")) for k in LETTERS)
+    return t if all(t) else None
 
 
 def cargar_huellas(path):
+    """{5 opciones normalizadas: [(enunciado normalizado, etiqueta), ...]} de train."""
     tabla = {}
     try:
         for l in open(path, encoding="utf-8"):
             if l.strip():
                 r = json.loads(l)
-                if len(r.get("options") or {}) == 5 and len(huella(r)[0]) >= 2:
-                    tabla[huella(r)] = r["label"]
+                o = _opciones_dup(r)
+                if o and r.get("label") in LETTERS:
+                    tabla.setdefault(o, []).append((_texto_dup(r.get("text")), r["label"]))
     except Exception:
         pass
     return tabla
 
 
+def buscar_duplicado(pr, tabla, umbral=0.6):
+    """Letra de un problema de train con EXACTAMENTE las mismas 5 opciones y enunciado parecido (difflib >= 0,6), o None.
+    Si dos candidatos casi empatados tienen etiquetas distintas, no contesta. En val: 13 contestados, 13 correctos, ~2 ms."""
+    try:
+        import difflib
+        o = _opciones_dup(pr)
+        if not o or o not in tabla:
+            return None
+        q = _texto_dup(pr.get("text"))
+        cand = [(difflib.SequenceMatcher(None, q, t).ratio(), lab) for t, lab in tabla[o]]
+        mejor = max(c[0] for c in cand)
+        if mejor < umbral:
+            return None
+        letras = {lab for r, lab in cand if r >= mejor - 0.05}
+        return letras.pop() if len(letras) == 1 else None
+    except Exception:
+        return None
+
+
+class Buscador:
+    """Pista del problema de train más parecido: TF-IDF de palabras (sin el número del problema ni cifras), coseno."""
+
+    def __init__(self, train_path, pistas_path, umbral):
+        import collections
+        import math
+        self.umbral = umbral
+        pistas = {r["id"]: r["pista"] for r in (json.loads(l) for l in open(pistas_path, encoding="utf-8") if l.strip())}
+        docs = []
+        for l in open(train_path, encoding="utf-8"):
+            if l.strip():
+                r = json.loads(l)
+                if r.get("id") in pistas:
+                    docs.append((pistas[r["id"]], collections.Counter(self._tok(r.get("text")))))
+        df = collections.Counter(w for _, c in docs for w in c)
+        self.idf = {w: math.log(len(docs) / n) for w, n in df.items()}
+        self.indice = collections.defaultdict(list)
+        self.pistas = []
+        for i, (pista, c) in enumerate(docs):
+            v = {w: (1 + math.log(n)) * self.idf[w] for w, n in c.items()}
+            norma = math.sqrt(sum(x * x for x in v.values())) or 1.0
+            for w, x in v.items():
+                self.indice[w].append((i, x / norma))
+            self.pistas.append(pista)
+
+    @staticmethod
+    def _tok(t):
+        return [w for w in _texto_dup(t).split() if len(w) > 2 and not w.isdigit()]
+
+    def pista(self, pr):
+        import collections
+        import math
+        try:
+            c = collections.Counter(self._tok(pr.get("text")))
+            v = {w: (1 + math.log(n)) * self.idf[w] for w, n in c.items() if w in self.idf}
+            norma = math.sqrt(sum(x * x for x in v.values())) or 1.0
+            puntos = collections.defaultdict(float)
+            for w, x in v.items():
+                for i, y in self.indice[w]:
+                    puntos[i] += x / norma * y
+            if not puntos:
+                return None
+            i, sim = max(puntos.items(), key=lambda kv: kv[1])
+            return self.pistas[i] if sim >= self.umbral else None
+        except Exception:  # noqa: BLE001
+            return None
+
+
+BUSCADOR = None  # experimento: se carga en main si PISTAS_TRAIN está definido
+
+
 # ----------------------------------------------------------------------------- resolver
+LOG = None  # fichero JSONL con lo que escribe el modelo en cada problema (para ver por qué fallan los programas)
+
+
+def gramatica_letras(opts, modo):
+    """Gramática de la letra de reserva. 'descarte': si las 5 opciones son números distintos, quita los dos extremos (el menor
+    y el mayor son la respuesta solo el 10 % y el 13 % de las veces en el Canguro) y deja elegir al modelo entre las 3 centrales."""
+    if modo == "descarte" and len(opts) == 5:
+        vals = {k: parse_value(v) for k, v in opts.items()}
+        if all(v is not None for v in vals.values()) and len(set(vals.values())) == 5:
+            centrales = sorted(LETTERS, key=lambda k: vals[k])[1:4]
+            return "root ::= [" + "".join(sorted(centrales)) + "]"
+    return "root ::= [A-E]"
+
+
+def reserva(opts, letra_modelo):
+    """Qué contestar si no hay programa que case. 'mediana': si las 5 opciones son números distintos, la del medio (en el
+    Canguro la correcta es la central el ~30 % de las veces y los extremos solo el 10-13 %); si no, la letra del modelo o D.
+    Ojo: el modelo afinado contesta casi siempre la misma letra sin razonar, así que su letra vale como una constante."""
+    if RESERVA == "mediana" and len(opts) == 5:
+        vals = {k: parse_value(v) for k, v in opts.items()}
+        if all(v is not None for v in vals.values()) and len(set(vals.values())) == 5:
+            return sorted(LETTERS, key=lambda k: vals[k])[2], "mediana"
+    return letra_modelo or os.environ.get("FALLBACK_ANSWER", "D"), "letra"
+
+
 def resolver(pr, llm, huellas, limite):
     t0 = time.time()
     llm.simulado, llm.cacheado = 0.0, 0
     opts = {k: v for k, v in (pr.get("options") or {}).items() if str(v).strip()}
     restante = (lambda: limite - llm.simulado) if llm.forzado else (lambda: limite - (time.time() - t0))  # noqa: E731
-    if len(opts) == 5 and huella(pr) in huellas and len(huella(pr)[0]) >= 3:
-        return huellas[huella(pr)], "duplicado"
-    user = format_problem(pr)
-    n_user = max(20, len(user) // 3)
-    # 1) programa corto: tokens que caben tras leer el enunciado, con margen para ejecutar y casar
-    disponibles = restante() - n_user / llm.tps_in - 4  # 4 s para ejecutar el programa y casar
-    n_pred = int(min(220, max(40, disponibles * llm.tps_out)))
-    if disponibles < 10:  # no da tiempo ni a un programa mínimo: directo a la reserva
-        text = ""
-        if RESERVA == "mediana" and len(opts) == 5:
-            vals = {k: parse_value(v) for k, v in opts.items()}
-            if all(v is not None for v in vals.values()) and len(set(vals.values())) == 5:
-                return sorted(LETTERS, key=lambda k: vals[k])[2], "mediana"
-        return "C", "sin_tiempo"
-    msgs = [{"role": "system", "content": SYSTEM_CODE}, {"role": "user", "content": user}]
-    text = ""
+    traza = {"id": pr.get("id"), "language": pr.get("language")}
+    dup = buscar_duplicado(pr, huellas)
+    if dup:
+        return dup, "duplicado", traza
+    if not opts:
+        return os.environ.get("FALLBACK_ANSWER", "D"), "sin_opciones", traza
+    contenido = format_problem(pr)
+    pista = PISTAS.get(pr.get("id")) or (BUSCADOR.pista(pr) if BUSCADOR else None)
+    if pista:
+        contenido += "\nHint: " + pista
+        traza["pista"] = pista
+    msgs = [{"role": "system", "content": SYSTEM_CODE}, {"role": "user", "content": contenido}]
+    # 1) PRIMERO la letra (1 token, con gramática): cuesta solo leer el enunciado (~13-15 s) y deja la lectura en caché
+    #    para el programa. Así siempre hay una letra del modelo de reserva aunque el programa no termine.
+    letra_modelo = None
     try:
-        text, _ = llm.chat(msgs, n_pred, timeout=max(5, restante() - 2))
-        code = extract_code(text)
-        out = run_code(code, min(3.0, max(1.0, restante() - 3)))
-        letra = match_option(out, opts) if opts else None
-        if letra:
-            return letra, "python"
+        t1, _ = llm.chat(msgs, 1, grammar=gramatica_letras(opts, RESERVA), timeout=max(5, restante() - 1))
+        letra_modelo = t1.strip()[:1] if t1.strip()[:1] in LETTERS else None
     except Exception:
         pass
-    # 2) valor razonado si queda tiempo para ~120 tokens
-    if restante() > 120 / llm.tps_out + n_user / llm.tps_in + 4 and opts:
+    traza["letra"] = letra_modelo
+    # 2) problemas con figura: el programa no puede verla; nos quedamos con la letra (ahorra ~40 s)
+    if pr.get("text_only") is False and os.environ.get("FIGURA_PROGRAMA") != "1":
+        a, via = reserva(opts, letra_modelo)
+        return a, via + "_figura", traza
+    # 3) programa con el mismo prompt que la letra (caché: no se relee el enunciado) y parada al cerrar el bloque.
+    #    Si no casa y queda tiempo, otro intento muestreado (los programas buenos son cortos: ~50 tokens, ~18 s).
+    for intento in range(1 + REINTENTOS):
+        disponibles = restante() - 4  # 4 s para ejecutar el programa y casar
+        n_pred = int(min(220, disponibles * llm.tps_out))
+        if n_pred < (25 if intento == 0 else 45):
+            break
         try:
-            n_pred = int(min(260, (restante() - n_user / llm.tps_in - 4) * llm.tps_out))
-            t2, _ = llm.chat([{"role": "system", "content": SYSTEM_VALOR}, {"role": "user", "content": user}], n_pred, timeout=max(5, restante() - 2))
-            m = re.search(r"Final answer:\s*(.+)", t2)
-            if m:
-                letra = match_option(m.group(1).strip(), opts)
-                if letra:
-                    return letra, "valor"
-            m = re.findall(r"Answer:\s*\**\s*\(?([A-E])\b", t2)
-            if m:
-                return m[-1], "valor_letra"
-        except Exception:
+            text, _ = llm.chat(msgs, n_pred, stop=["\n```"], timeout=max(5, restante() - 2),
+                               temperature=0.0 if intento == 0 else 0.7, seed=42 + intento)
+            code = extract_code(text + "\n```")
+            traza.setdefault("programas", []).append(code[-1500:])
+            out = run_code(code, min(3.0, max(1.0, restante() - 1)))
+            traza.setdefault("salidas", []).append(out[-300:])
+            letra = match_option(out, opts)
+            if letra:
+                return letra, "python" if intento == 0 else f"python{intento + 1}", traza
+        except Exception as exc:  # noqa: BLE001
+            traza["error"] = type(exc).__name__
+    a, via = reserva(opts, letra_modelo)
+    return a, via, traza
+
+
+RESERVA = os.environ.get("RESERVA", "mediana")
+REINTENTOS = int(os.environ.get("REINTENTOS", "2"))
+PISTAS = {}  # experimento: PISTAS=<jsonl con {id, pista}> → "Hint: ..." tras las opciones (apagado si no se da)
+try:
+    if os.environ.get("PISTAS"):
+        PISTAS = {r["id"]: r["pista"] for r in (json.loads(l) for l in open(os.environ["PISTAS"], encoding="utf-8") if l.strip())}
+except Exception:  # noqa: BLE001
+    PISTAS = {}
+
+
+def puerto_oficial():
+    """LLM_PORT del config.env del repo oficial (8081 en la placa); si no se encuentra, 8081."""
+    for c in (os.path.join(HERE, "config.env"), os.path.join(HERE, "..", "config.env"),
+              os.path.expanduser("~/datathon-UPC-maths-qualcomm-arduino-unoq/config.env")):
+        try:
+            for l in open(c, encoding="utf-8"):
+                if l.strip().startswith("LLM_PORT="):
+                    return l.split("=", 1)[1].split("#")[0].strip()
+        except OSError:
             pass
-    # 3) reserva: mediana de las opciones numéricas (28-30 % en train/val) o letra del modelo con gramática (12-18 %, azar)
-    if RESERVA == "mediana" and len(opts) == 5:
-        vals = {k: parse_value(v) for k, v in opts.items()}
-        if all(v is not None for v in vals.values()) and len(set(vals.values())) == 5:
-            return sorted(LETTERS, key=lambda k: vals[k])[2], "mediana"
-    try:
-        if restante() > 3:
-            t3, _ = llm.chat(msgs + [{"role": "assistant", "content": text or "..."}, {"role": "user", "content": "Answer letter:"}], 1,
-                             grammar="root ::= [A-E]", timeout=max(3, restante() - 1))
-            a = t3.strip()[:1]
-            if a in LETTERS:
-                return a, "letra"
-    except Exception:
-        pass
-    return "C", "defecto"
-
-
-RESERVA = os.environ.get("RESERVA", "letra")
+    return os.environ.get("LLM_PORT", "8081")
 
 
 def main():
     p = argparse.ArgumentParser()
     p.add_argument("--input", required=True)
     p.add_argument("--output", required=True)
-    p.add_argument("--url", default=os.environ.get("LLM_URL", "http://127.0.0.1:8080"))
+    p.add_argument("--url", default=os.environ.get("LLM_URL", f"http://127.0.0.1:{puerto_oficial()}"))
     p.add_argument("--limite", type=float, default=56.0, help="segundos útiles por problema (60 menos margen)")
     p.add_argument("--train", default=os.path.join(HERE, "data", "train.jsonl"), help="para el atajo de duplicados")
     p.add_argument("--tps-forzado", default="", help="simular la placa desde el PC: 'leer,escribir' tokens/s, p. ej. 3.8,2.5")
-    p.add_argument("--reserva", default=os.environ.get("RESERVA", "letra"), choices=["letra", "mediana"], help="qué contestar si el programa no casa")
+    p.add_argument("--reserva", default=os.environ.get("RESERVA", "mediana"), choices=["letra", "descarte", "mediana"],
+                   help="letra de reserva: el modelo elige entre las 5 (letra) o entre las 3 centrales si son números (descarte)")
+    p.add_argument("--log", default="", help="JSONL con lo que escribe el modelo en cada problema (por defecto <output>.log.jsonl)")
     args = p.parse_args()
     global RESERVA
     RESERVA = args.reserva
     llm = LLM(args.url, tuple(float(x) for x in args.tps_forzado.split(",")) if args.tps_forzado else None)
     llm.warm()
     huellas = cargar_huellas(args.train)
+    global BUSCADOR
+    try:
+        if os.environ.get("PISTAS_TRAIN"):
+            BUSCADOR = Buscador(args.train, os.environ["PISTAS_TRAIN"], float(os.environ.get("PISTAS_UMBRAL", "0.2")))
+    except Exception:  # noqa: BLE001
+        BUSCADOR = None
     with open(args.input, encoding="utf-8") as f:
         problems = [json.loads(l) for l in f if l.strip()]
     with open(args.output, "w", newline="", encoding="utf-8") as out:
@@ -275,15 +421,19 @@ def main():
         w.writerow(["id", "language", "answer", "seconds", "status"])
         for n, pr in enumerate(problems, 1):
             t0 = time.time()
+            traza = {"id": pr.get("id")}
             try:
-                a, via = resolver(pr, llm, huellas, args.limite)
+                a, via, traza = resolver(pr, llm, huellas, args.limite)
             except Exception as exc:  # noqa: BLE001
-                a, via = "C", f"error:{type(exc).__name__}"
+                a, via = os.environ.get("FALLBACK_ANSWER", "D"), f"error:{type(exc).__name__}"
             if a not in LETTERS:
-                a = "C"
+                a = os.environ.get("FALLBACK_ANSWER", "D")
             seg = llm.simulado if llm.forzado else time.time() - t0
             w.writerow([pr.get("id", ""), pr.get("language", ""), a, f"{seg:.1f}", via])
             out.flush()
+            traza.update({"respuesta": a, "via": via, "segundos": round(seg, 1)})
+            with open(args.log or args.output + ".log.jsonl", "a", encoding="utf-8") as lf:
+                lf.write(json.dumps(traza, ensure_ascii=False) + "\n")
             print(f"[{n}/{len(problems)}] {pr.get('id')} -> {a} en {seg:.1f} s ({via}; lee {llm.tps_in:.1f}, escribe {llm.tps_out:.1f} tok/s)", file=sys.stderr, flush=True)
 
 

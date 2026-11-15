@@ -1,0 +1,50 @@
+origen,modelo,modo,aciertos,total,pct,segundos_pc,figura,texto
+ajuste_96GB,17b_codigo_Q8_0,"letra RAG k=0 con explicaciones, modo letra",37,200,18.5,185,14/112,23/88
+ajuste_96GB,17b_codigo_Q8_0,python Python + fallback RAG explicado,72,200,36.0,1345,33/112,39/88
+ajuste_96GB,17b_codigo_Q8_0,"ragexpl RAG k=2 con explicaciones, modo razona",59,200,29.5,629,30/112,29/88
+ajuste_96GB,17b_codigo_Q8_0,"razona RAG k=0 con explicaciones, modo razona",53,200,26.5,1334,27/112,26/88
+ajuste_96GB,17b_explicacion_Q8_0,"letra RAG k=0 con explicaciones, modo letra",42,200,21.0,165,24/112,18/88
+ajuste_96GB,17b_explicacion_Q8_0,python Python + fallback RAG explicado,72,200,36.0,1652,41/112,31/88
+ajuste_96GB,17b_explicacion_Q8_0,"ragexpl RAG k=2 con explicaciones, modo razona",58,200,29.0,662,30/112,28/88
+ajuste_96GB,17b_explicacion_Q8_0,"razona RAG k=0 con explicaciones, modo razona",55,200,27.5,991,29/112,26/88
+ajuste_96GB,17b_mixto_Q8_0,"letra RAG k=0 con explicaciones, modo letra",44,200,22.0,169,26/112,18/88
+ajuste_96GB,17b_mixto_Q8_0,python Python + fallback RAG explicado,55,200,27.5,1928,20/112,35/88
+ajuste_96GB,17b_mixto_Q8_0,"ragexpl RAG k=2 con explicaciones, modo razona",57,200,28.5,861,28/112,29/88
+ajuste_96GB,17b_mixto_Q8_0,"razona RAG k=0 con explicaciones, modo razona",50,200,25.0,1384,22/112,28/88
+ajuste_96GB,08b_mixto_Q8_0,"letra RAG k=0 con explicaciones, modo letra",36,200,18.0,187,21/112,15/88
+ajuste_96GB,08b_mixto_Q8_0,python Python + fallback RAG explicado,52,200,26.0,2069,20/112,32/88
+ajuste_96GB,08b_mixto_Q8_0,"ragexpl RAG k=2 con explicaciones, modo razona",49,200,24.5,912,20/112,29/88
+ajuste_96GB,08b_mixto_Q8_0,"razona RAG k=0 con explicaciones, modo razona",49,200,24.5,1143,24/112,25/88
+ajuste_96GB,2b_codigo_Q8_0,"letra RAG k=0 con explicaciones, modo letra",50,200,25.0,198,29/112,21/88
+ajuste_96GB,2b_codigo_Q8_0,python Python + fallback RAG explicado,66,200,33.0,1722,34/112,32/88
+ajuste_96GB,2b_codigo_Q8_0,"ragexpl RAG k=2 con explicaciones, modo razona",59,200,29.5,1087,31/112,28/88
+ajuste_96GB,2b_codigo_Q8_0,"razona RAG k=0 con explicaciones, modo razona",51,200,25.5,897,23/112,28/88
+ajuste_96GB,17b_mixto_3ep_r32_Q8_0,"letra RAG k=0 con explicaciones, modo letra",44,200,22.0,169,24/112,20/88
+ajuste_96GB,17b_mixto_3ep_r32_Q8_0,python Python + fallback RAG explicado,61,200,30.5,1767,23/112,38/88
+ajuste_96GB,17b_mixto_3ep_r32_Q8_0,"ragexpl RAG k=2 con explicaciones, modo razona",55,200,27.5,909,24/112,31/88
+ajuste_96GB,17b_mixto_3ep_r32_Q8_0,"razona RAG k=0 con explicaciones, modo razona",49,200,24.5,866,20/112,29/88
+ajuste_96GB,08b_explicacion_Q8_0,"letra RAG k=0 con explicaciones, modo letra",37,200,18.5,192,22/112,15/88
+ajuste_96GB,08b_explicacion_Q8_0,python Python + fallback RAG explicado,44,200,22.0,1901,22/112,22/88
+ajuste_96GB,08b_explicacion_Q8_0,"ragexpl RAG k=2 con explicaciones, modo razona",44,200,22.0,972,22/112,22/88
+ajuste_96GB,08b_explicacion_Q8_0,"razona RAG k=0 con explicaciones, modo razona",45,200,22.5,842,29/112,16/88
+ajuste_96GB,2b_mixto_Q8_0,"letra RAG k=0 con explicaciones, modo letra",39,200,19.5,202,22/112,17/88
+ajuste_96GB,2b_mixto_Q8_0,python Python + fallback RAG explicado,68,200,34.0,2241,29/112,39/88
+ajuste_96GB,2b_mixto_Q8_0,"ragexpl RAG k=2 con explicaciones, modo razona",57,200,28.5,1178,27/112,30/88
+ajuste_96GB,2b_mixto_Q8_0,"razona RAG k=0 con explicaciones, modo razona",49,200,24.5,1045,23/112,26/88
+ajuste_96GB,2b_explicacion_Q8_0,"letra RAG k=0 con explicaciones, modo letra",42,200,21.0,226,26/112,16/88
+ajuste_96GB,2b_explicacion_Q8_0,python Python + fallback RAG explicado,66,200,33.0,2156,32/112,34/88
+ajuste_96GB,2b_explicacion_Q8_0,"ragexpl RAG k=2 con explicaciones, modo razona",66,200,33.0,1010,32/112,34/88
+ajuste_96GB,2b_explicacion_Q8_0,"razona RAG k=0 con explicaciones, modo razona",47,200,23.5,1020,25/112,22/88
+ajuste_96GB,17b_codigo_Q4_0,"letra RAG k=0 con explicaciones, modo letra",36,200,18.0,193,13/112,23/88
+ajuste_96GB,17b_codigo_Q4_0,python Python + fallback RAG explicado,64,200,32.0,1269,25/112,39/88
+ajuste_96GB,17b_codigo_Q4_0,"ragexpl RAG k=2 con explicaciones, modo razona",50,200,25.0,676,18/112,32/88
+ajuste_96GB,17b_codigo_Q4_0,"razona RAG k=0 con explicaciones, modo razona",43,200,21.5,735,21/112,22/88
+ajuste_96GB,17b_explicacion_Q4_0,"letra RAG k=0 con explicaciones, modo letra",39,200,19.5,177,23/112,16/88
+ajuste_96GB,17b_explicacion_Q4_0,python Python + fallback RAG explicado,56,200,28.0,2147,32/112,24/88
+ajuste_96GB,17b_explicacion_Q4_0,"ragexpl RAG k=2 con explicaciones, modo razona",57,200,28.5,660,28/112,29/88
+ajuste_96GB,17b_explicacion_Q4_0,"razona RAG k=0 con explicaciones, modo razona",62,200,31.0,792,33/112,29/88
+techo_modelos_grandes,Qwen3-4B-Q8,"SISTEMA (reintentos=no, figura=razona)",94,200,47.0,2074,45/112,49/88
+techo_modelos_grandes,Qwen3-1.7B-Q4_K_M_cpu,"SISTEMA (reintentos=no, figura=razona)",72,200,36.0,2673,32/112,40/88
+techo_modelos_grandes,Qwen3-4B-Instruct-2507-Q8,"SISTEMA (reintentos=no, figura=razona)",99,200,49.5,1426,38/112,61/88
+techo_modelos_grandes,Qwen3.5-4B-Q8,"SISTEMA (reintentos=no, figura=razona)",90,200,45.0,2032,36/112,54/88
+techo_modelos_grandes,Qwen3-8B-Q8,"SISTEMA (reintentos=no, figura=razona)",94,200,47.0,1065,41/112,53/88

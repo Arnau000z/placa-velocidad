@@ -1,74 +1,112 @@
-# Velocidad en la placa
+# Math on the Edge · copiloto de matemáticas en una Arduino UNO Q
 
-Pruebas para medir en la Arduino UNO Q lo que no se puede simular desde el PC: a qué velocidad lee y escribe cada modelo, cuánto ocupa, si se frena por calor y cuánto tarda de verdad `predict.py` con el límite de 60 s.
+![Placa](https://img.shields.io/badge/placa-Arduino%20UNO%20Q%204%20GB-00979D)
+![CPU](https://img.shields.io/badge/CPU-4%C3%97%20Cortex--A53-555)
+![Modelo](https://img.shields.io/badge/modelo-Qwen3--1.7B%20%2B%20LoRA%20r32-6250d6)
+![Motor](https://img.shields.io/badge/llama.cpp-2cbe0ec-2a78d6)
+![Examen de prueba](https://img.shields.io/badge/examen%20de%20prueba-57%20%25%20(baseline%2021%20%25)-1baf7a)
 
-Con esos datos se decide el modelo, la cuantización y el presupuesto de tokens de la entrega.
+Proyecto del equipo para el **Datathon FME 2026, reto de Qualcomm «Math on the Edge»**: resolver problemas del Canguro matemático (opción múltiple A-E, en inglés y catalán) con un modelo de lenguaje que corre **entero dentro de una Arduino UNO Q**. Sin red y con 60 segundos por problema, en una CPU que lee unos 4,6 tokens por segundo.
 
-## Uso
+| | Acierto en el examen de prueba de la organización |
+|---|---|
+| Azar | 20 % |
+| Baseline del reto (Qwen3.5-0.8B, letra directa) | ~21 % |
+| Qwen3-1.7B sin entrenar, con nuestro `predict.py` | 37 % |
+| **Qwen3-1.7B + LoRA entrenado con 9.603 programas verificados** | **57 %** |
 
-**1. Llevar el repo a la placa** (desde el PC, con la placa por USB-C):
+*Simulado con el reloj de la placa (4,6 / 2,7 tokens/s medidos), con el mismo `predict.py` y el mismo GGUF que van a la placa.*
 
-```powershell
-.\subir_a_placa.ps1
+![Del azar al 57 %](figuras/progreso.png)
+
+## Cómo funciona, en 30 segundos
+
+1. **El modelo no razona en prosa: escribe un programa.** Qwen3-1.7B traduce el enunciado a 5-8 líneas de Python. La CPU las ejecuta en milisegundos y el resultado se casa con una de las cinco opciones. Cuando el programa casa con una opción, acierta el 90 % de las veces.
+2. **El modelo está entrenado para eso.** Un LoRA sobre casi 10.000 problemas con un programa corto **ejecutado y comprobado**. Los problemas vienen de M3Kang, de problemas sintéticos de modelos abiertos y de los aciertos del propio modelo.
+3. **Todo gira en torno al reloj.** El prompt de sistema va en caché y la letra se pide primero (1 token). El presupuesto de tokens se recalcula con la velocidad real, y si el programa no casa hay reintentos y una reserva por la mediana. Siempre sale una letra antes de 60 s.
+
+```mermaid
+flowchart LR
+    E[Enunciado] --> D{¿Repetido<br/>de train?}
+    D -- no --> L[Letra<br/>1 token]
+    L --> P[Programa<br/>Python corto]
+    P --> X[Ejecutar]
+    X --> C{¿Casa con<br/>una opción?}
+    C -- sí --> R[Respuesta]
+    C -- no --> P2[Reintento o<br/>mediana]
+    P2 --> R
+    D -- sí --> R
 ```
 
-Copia los scripts y el `predict.py` más reciente del equipo (`D:\Datathon_A\entrega\predict.py`). Por SSH vale igual: `scp -r placa-velocidad arduino@IP:~`.
+![Un problema en 60 segundos](figuras/presupuesto_tiempo.png)
 
-**2. Medir** (en la placa):
+## Documentación
 
-```bash
-cd ~/placa-velocidad
-./todo.sh            # completo, unos 50 min
-./todo.sh rapido     # solo 1.7B Q8 y Q4_0, unos 15 min
+| | |
+|---|---|
+| [El reto](docs/01-el-reto.md) | La placa, los datos, el formato del examen y la línea base |
+| [La historia](docs/02-historia.md) | De 21 % a 57 % en cinco actos, con lo que aprendimos |
+| [Cronología detallada](docs/cronologia-detallada.md) | El cuaderno de laboratorio, hora a hora |
+| [El sistema](docs/03-sistema.md) | `predict.py` paso a paso: caché, presupuesto de tiempo, reserva, robustez |
+| [Los modelos](docs/04-modelos.md) | 13 modelos base, 2 de embeddings, 5 generadores y unos 30 entrenados |
+| [Datos y entrenamiento](docs/05-datos-y-entrenamiento.md) | Limpieza de opciones, programas verificados, datos sintéticos, recetas |
+| [Resultados](docs/06-resultados.md) | Todas las pruebas y el análisis de errores por tema, idioma, nivel y causa |
+| [Lo que no funcionó](docs/07-lo-que-no-funciono.md) | RAG, pistas, GRPO, 4 bits, explicaciones… y por qué |
+| [Infraestructura](docs/08-infraestructura.md) | Torre, seis gráficas alquiladas, vigía automático y modelos abiertos |
+| [Kit de velocidad](docs/09-kit-de-velocidad.md) | Cómo medir en la placa y lo medido hasta ahora |
+
+## El repositorio
+
+```
+├── README.md
+├── docs/                    documentación (la de arriba)
+├── figuras/                 gráficas, generadas con figuras/graficas.py
+├── pruebas/                 registro de todas las pruebas en CSV
+├── codigo/
+│   ├── entrega/             predict.py, simulación de placa y evaluación automática de candidatos
+│   ├── evaluacion/          rejilla de variantes, casado de opciones, repetidos train↔val
+│   ├── entrenamiento/       LoRA / ajuste completo, GRPO, exportación a GGUF, mezcla de datos
+│   ├── datos_sinteticos/    generadores con modelos abiertos y verificación por ejecución
+│   └── nube/                alquiler y control de máquinas, vigía con colas
+├── equipo/predict.py        el predict.py que se copia a la placa
+└── 00_preparar.sh … todo.sh kit de velocidad para la placa (+ subir_a_placa.ps1, traer_resultados.ps1)
 ```
 
-Pide la contraseña de `sudo` una vez: para los servicios `math-llm` y `math-embed` mientras mide y los vuelve a arrancar al acabar.
+## Reproducirlo
 
-**3. Traer los resultados** (desde el PC):
+1. **Datos:** el `prepare_m3kang.py` del repositorio del reto, más la limpieza de opciones ([detalle](docs/05-datos-y-entrenamiento.md#limpieza-de-opciones)).
+2. **Datos de entrenamiento:**
+   - [`generar_helmcode.py`](codigo/datos_sinteticos/generar_helmcode.py) genera problemas sintéticos con modelos abiertos.
+   - [`verificar_sintetico.py`](codigo/datos_sinteticos/verificar_sintetico.py) los ejecuta y se queda con los que aciertan.
+   - [`mezclar_sft.py`](codigo/entrenamiento/mezclar_sft.py) junta todas las fuentes.
+3. **Entrenar y exportar en una gráfica de 24 GB o más:**
+   ```bash
+   bash trabajo_lora_total.sh 17b_lora32_v2 3 1e-4 32 sft_codigo_v2.jsonl
+   ```
+   Entrena el LoRA r32 de 3 épocas, lo exporta a GGUF Q8_0 y lo examina.
+4. **Simular la placa** desde el PC:
+   ```bash
+   python codigo/entrega/sim_demo.py http://127.0.0.1:8095 nombre --reserva mediana
+   ```
+5. **En la placa:**
+   ```powershell
+   .\subir_a_placa.ps1 -Extra modelo-Q8_0.gguf
+   ```
+   ```bash
+   PRINCIPAL=modelo-Q8_0.gguf ./todo.sh rapido
+   ```
 
-```powershell
-.\traer_resultados.ps1
-```
+## Datos y licencias
 
-O pega el contenido de `resultados/<placa>_<fecha>/resumen.md`.
+M3Kang tiene licencia **solo para investigación**. Este repositorio **no incluye ningún enunciado, imagen ni índice de M3Kang**, solo identificadores de problema y resultados agregados. Los datos de entrenamiento y los modelos entrenados se quedan fuera del repositorio.
 
-## Qué hace cada paso
+## Estado (15/11/2026, 05:00)
 
-| Paso | Qué mide | Tiempo |
-|---|---|---|
-| `00_preparar.sh` | Compila `llama-bench` y baja los modelos que falten (el repo del reto no compila `llama-bench`) | 2-10 min, según la wifi |
-| `01_info.sh` | CPU y sus instrucciones (dotprod, i8mm), frecuencias, temperatura, memoria y versión de llama.cpp | segundos |
-| `02_bench.sh` | `llama-bench` de cada modelo: lee 200 tokens, escribe 64, 2 repeticiones | unos 20 min |
-| `03_servidor.py` | `llama-server` con los ajustes del reto y el prompt de sistema del equipo en caché: carga, RAM y velocidad real por problema | unos 5 min |
-| `04_cadena.py` | `predict.py` entero sobre 15 problemas de `val.jsonl`: aciertos, segundos por problema, cuántos pasan de 60 s, vías | unos 15 min |
-| `vigia_temp.sh` | De fondo, cada 5 s: temperatura, MHz de cada núcleo, carga y memoria | toda la pasada |
-| `resumen.py` | Lo junta todo en `resumen.md` | segundos |
-
-Modelos que mide `llama-bench`: Qwen3-1.7B en Q8_0, Q4_0, Q4_K_M y Q6_K, Qwen3.5-0.8B Q8_0 (referencia: el README del reto da 11 t/s leyendo y 5 escribiendo) y Qwen3.5-2B Q4_0.
-
-## Ajustes
-
-Todo se cambia con variables al lanzar, por ejemplo `HILOS=3 ./todo.sh`:
-
-| Variable | Por defecto | Para qué |
-|---|---|---|
-| `PRINCIPAL` | `Qwen_Qwen3-1.7B-Q8_0.gguf` | Modelo del servidor y de la cadena |
-| `SOLO` | los 6 de la lista | `SOLO="a.gguf b.gguf"` mide solo esos |
-| `EXTRA` | vacío | Modelos propios, p. ej. `EXTRA=~/models/afinado.gguf` |
-| `MODELOS_SERVIDOR` | `PRINCIPAL` | Varios modelos en la prueba del servidor |
-| `N_CADENA` | 15 (5 en rápido) | Problemas de la cadena completa |
-| `HILOS` | 4 | Hilos de llama.cpp |
-| `P_TOKENS`, `N_TOKENS`, `REPS` | 200, 64, 2 | Tamaños de `llama-bench` |
-| `PREDICT` | `equipo/predict.py` | Otro `predict.py` |
-| `DATOS` | `~/datathon-UPC-maths-qualcomm-arduino-unoq/data` | Dónde están `val.jsonl` y `train.jsonl` |
-
-Cada paso se puede lanzar suelto (`./02_bench.sh`, `python3 03_servidor.py --modelos X.gguf`) y escribe en la misma carpeta de resultados si se exporta `RES`.
-
-## Cómo leer el resumen
-
-- **Programa que cabe**: tokens de programa que da tiempo a escribir en 56 s con un enunciado de 180 tokens y el sistema en caché. Es la misma cuenta que hace `predict.py`. Por debajo de unos 80 tokens, el programa corto ya no entra.
-- **dotprod: no** quiere decir que llama.cpp va por el camino lento. Ahí el Q4_0 no tiene por qué leer más rápido que el Q8_0: lo dice la tabla.
-- **Lee con caché** frente a **lee frío**: si se parecen, el prompt de sistema no se está reaprovechando.
-- **Se frena por calor**: si la frecuencia baja con la carga, los tiempos del final del examen serán peores que los del principio.
-
-No se sube nada de M3Kang: los problemas se leen de la placa, y si no están se usan cinco inventados.
+- **Modelo líder:** `17b_lora32_v2` (Qwen3-1.7B + LoRA r32, mezcla v2, 9.603 ejemplos).
+  - Examen de prueba: 57/100 a velocidad de placa, sin ningún problema por encima de 56 s.
+  - Val en inglés y catalán: 89/246.
+- **En marcha:**
+  - Mezcla v3 (16.313 ejemplos, con problemas dirigidos a las trampas en las que cae el modelo), entrenando.
+  - Una cuarta mezcla con una generación masiva dirigida a lógica, enunciados largos, medida, geometría sin figura y catalán.
+  - Promedio de pesos de los mejores modelos.
+- **Siguiente:** medir el elegido en la placa con el kit, congelar la versión y entregar.

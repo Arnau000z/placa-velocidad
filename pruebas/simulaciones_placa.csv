@@ -1,0 +1,12 @@
+modelo,conjunto,reserva,tps_leer_escribir,aciertos,total,texto,figura,seg_media,seg_max,pasados_56s,vias
+2b_lora32,demo,mediana,"4.6,2.7",53,100,51/80,2/20,36,52,0,"{'python': '37/40', 'mediana_figura': '2/18', 'mediana': '12/32', 'letra': '1/7', 'python2': '1/1', 'letra_figura': '0/2'}"
+17b_grpo_lora32,demo,mediana,"4.6,2.7",50,100,48/80,2/20,34,52,0,"{'python': '36/43', 'mediana_figura': '2/18', 'mediana': '8/28', 'letra': '2/7', 'python2': '2/2', 'letra_figura': '0/2'}"
+17b_grpo_lora32,val_texto_eng_cat,mediana,"4.6,2.7",85,246,85/246,0/0,44,58,1,"{'python': '39/61', 'mediana': '33/146', 'python2': '3/8', 'duplicado': '4/4', 'letra': '6/27'}"
+17b_lora32_v2,demo,mediana,"4.6,2.7",57,100,55/80,2/20,34,52,0,"{'python': '47/52', 'mediana_figura': '2/18', 'letra': '1/4', 'mediana': '6/22', 'python2': '1/1', 'letra_figura': '0/2', 'python3': '0/1'}"
+17b_lora32_v2,val_texto_eng_cat,mediana,"4.6,2.7",93,246,93/246,0/0,43,58,1,"{'python': '50/85', 'mediana': '32/125', 'python2': '2/9', 'duplicado': '4/4', 'letra': '4/22', 'python3': '1/1'}"
+17b_v2_lr2e4,demo,mediana,"4.6,2.7",54,100,52/80,2/20,34,52,0,"{'python': '45/54', 'mediana_figura': '2/18', 'mediana': '5/21', 'letra': '1/3', 'python2': '1/2', 'letra_figura': '0/2'}"
+17b_v2_lr2e4,val_texto_eng_cat,mediana,"4.6,2.7",92,246,92/246,0/0,43,58,1,"{'python': '52/89', 'mediana': '32/127', 'python2': '0/4', 'duplicado': '4/4', 'letra': '4/22'}"
+17b_v2_grpo,demo,mediana,"4.6,2.7",54,100,52/80,2/20,35,52,0,"{'python': '44/50', 'mediana_figura': '2/18', 'letra': '1/5', 'mediana': '6/23', 'python2': '1/2', 'letra_figura': '0/2'}"
+17b_v2_grpo,val_texto_eng_cat,mediana,"4.6,2.7",91,246,91/246,0/0,43,58,1,"{'python': '48/80', 'mediana': '33/129', 'python2': '2/9', 'duplicado': '4/4', 'letra': '4/24'}"
+17b_lora32,val_texto_eng_cat,mediana,"4.6,2.7",86,246,86/246,0/0,45,58,1,"{'python': '41/63', 'mediana': '36/153', 'python2': '3/3', 'letra': '6/27'}"
+2b_lora32,val_texto_eng_cat,mediana,"4.6,2.7",80,246,80/246,0/0,46,56,0,"{'mediana': '37/162', 'python': '37/54', 'letra': '6/26', 'python2': '0/3', 'python3': '0/1'}"
