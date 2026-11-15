@@ -69,7 +69,7 @@ How the assistant works (`python/insights.py`, all on the board):
 | --- | --- | --- |
 | Ability model (IRT 3PL, online) | **Prequential evaluation**: every answer is predicted before the model learns from it (an out-of-sample test that needs no split), against two baselines. AUC, Brier, log-loss, accuracy, calibration curve and ECE | AUC 0.63 vs 0.57 (problem level only) vs 0.47 (student's own running accuracy); ECE 4.2%. The student's own accuracy is worse than chance because the adaptive trainer gives harder problems after right answers: a model that accounts for difficulty is needed |
 | Semantic families (bge-m3 + spherical k-means) | Mean cosine within a family vs between families | 0.57 vs 0.49 (810 problems, 24 families) |
-| Hints (Qwen3.5 0.8B) | Hints shown and how many gave the answer away (live); reference measurement on 725 validation problems | 6.3% leaked at the first try; 0 reach a student after the checks |
+| Hints (language model; reference measured with Qwen3.5 0.8B) | Hints shown and how many gave the answer away (live); reference measurement on 725 validation problems | 6.3% leaked at the first try; 0 reach a student after the checks |
 | Translations (SalamandraTA-7B) | 5 automatic checks per translation, threshold from a baseline (below) | see below |
 | Report text | Template-based data-to-text: it can't invent facts. **Measured alternative**: the on-board LLM writing the summary from the same facts didn't invent numbers but distorted facts and mixed languages (2 of 4 drafts in our test), so the LLM is used only where its output is verified (hints, translations) | |
 

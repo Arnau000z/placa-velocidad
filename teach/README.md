@@ -139,7 +139,8 @@ Bridge (`Bridge.call("draw", ...)`): `?` and the level while a student answers, 
   feedback and hint 1. They are translated into Catalan and Spanish with verification.
 - **A benchmark.** We first measured the "Reason" track (below); it showed that a 0.8B model can't be trusted to
   solve problems, which is why we built a teaching platform. In it the model is used only where its output can be
-  checked.
+  checked. (The project's Reason part then fine-tuned a Qwen3-1.7B, `sopa_z10`, to 69% on the practice exam; that
+  is the model the app uses on the final board. See the [main README](../README.md).)
 
 **The teacher's AI** (`insights.py`, all computed on the board):
 
@@ -157,7 +158,7 @@ Bridge (`Bridge.call("draw", ...)`): `?` and the level while a student answers, 
 | Path | What |
 | --- | --- |
 | `app/math-coach/` | **The App Lab app**: `app.yaml`, `sketch/`, `python/` (`main.py`, `coach.py`, `school.py`, `insights.py`), `assets/` (the web app, the font, the explainer page), `board/` (the model bridge and its service), `deploy/` (install scripts), `tools/` (measurements, demo data, translations), `build_bank.py`, `dev_server.py`, and [a detailed README](app/math-coach/README.md) |
-| `config.env` | Pinned versions: llama.cpp commit; every model's repository, revision, file and SHA-256 (Qwen3.5 0.8B, bge-small, **bge-m3**, **SalamandraTA-7B**); run settings |
+| `config.env` | Pinned versions: llama.cpp commit; every model's repository, revision, file and SHA-256 (the team's **`sopa_z10`**, bge-small, **bge-m3**, **SalamandraTA-7B**); run settings |
 | `board/` | Setup scripts and the `math-llm` / `math-embed` systemd services (from the organisers, setup steps 2–7) |
 | `copilot/`, `eval.py`, `build_index.py`, `predict.py`, `make_variants.py` | The "Reason" pipeline, with the answer modes and RAG variants we added and measured |
 | `docs/` | Screenshots and the full results tables |
@@ -379,7 +380,7 @@ Team Impostors (Datathon FME 2026): **Arnau, Biel, Júlia and Carla**. Exam trac
   in this repository**: no `train.jsonl`, `val.jsonl`, images, `index.db`, `bank.json` or written solutions. Problems
   from the Kangaroo math competition.
 - **Models**:
-  - Qwen3.5 0.8B (Qwen team; GGUF by bartowski);
+  - Qwen3-1.7B (Qwen team), base of our fine-tuned `sopa_z10`, and Qwen3.5 0.8B (Qwen team; GGUF by bartowski), used for the earlier measurements;
   - bge-small-en-v1.5 and bge-m3 (BAAI; GGUF by CompendiumLabs and ggml-org);
   - SalamandraTA-7B-instruct (Barcelona Supercomputing Center, GPL-3.0). It is used only on a laptop and is not
     distributed with the app.

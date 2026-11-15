@@ -109,7 +109,7 @@ python3 predict.py --input examen.jsonl --output respuestas.csv
 |---|---|
 | Fichero | `sopa_z10-Q8_0.gguf`, 1.834.426.208 bytes, md5 `c1ba1d47e8f818378e27be6a7c1a01b2` |
 | Qué es | La media de los pesos de 10 Qwen3-1.7B entrenados con LoRA r32 (mezclas v3, v4 y v4b), exportada a GGUF Q8_0 |
-| Dónde está | `D:\Datathon_A\modelos_entrenados\` en la torre y como adjunto de la *release* `modelo-final` de este repositorio |
+| Dónde está | Adjunto a la *release* [`modelo-final`](https://github.com/Arnau000z/placa-velocidad/releases) de este repositorio (copia del equipo en `D:\Datathon_A\modelos_entrenados\`) |
 
 ![Del azar al 57 %](figuras/progreso.png)
 

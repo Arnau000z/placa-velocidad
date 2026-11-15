@@ -36,7 +36,7 @@ Nuestra idea: **que el modelo no razone en prosa, sino que escriba un programa d
 
 **[FOTO]** El diagrama de arquitectura del README.
 
-Todo corre en la parte Linux de la placa (QRB2210, 4 núcleos Cortex-A53). El microcontrolador no interviene. Para cada problema:
+El examen corre en la parte Linux de la placa (QRB2210, 4 núcleos Cortex-A53); el microcontrolador solo lo usa Teach, para la matriz LED. Para cada problema:
 
 1. **¿Repetido?** Si el problema ya está en el banco de entrenamiento con las mismas opciones, se responde en 2 ms.
 2. **Letra rápida.** El modelo da una letra en 1 token. Siempre hay respuesta, y el enunciado queda en la caché del servidor.
@@ -132,6 +132,6 @@ Examen de prueba de la organización (50 problemas en inglés y catalán), con e
 - **Un programa verificado vale más que una explicación.** Entrenar con explicaciones en prosa empeoró el modelo 9 puntos. Entrenar con programas comprobados lo mejoró 20.
 - **El RAG no ayudó.** Poner ejemplos parecidos en el prompt no subía la nota y costaba 65 s de lectura por problema.
 - **La sopa de modelos funciona.** Promediar los pesos de varios entrenamientos suma más que el mejor de ellos.
-- **Siguiente paso:** enseñar al modelo a plantear mejor, con datos dirigidos a las trampas típicas del Canguro, y llevar una pista al alumno en lugar de la respuesta (el modo «enseñar» del reto).
+- **Siguiente paso:** enseñar al modelo a plantear mejor, con datos dirigidos a las trampas típicas del Canguro, y medir con alumnos de verdad si la escalera de pistas de Math Coach les ayuda a aprender.
 
 M3Kang: Torres-Camps et al., 2026, arXiv:2601.16218. Sus datos no se redistribuyen.
