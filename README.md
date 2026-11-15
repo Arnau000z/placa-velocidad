@@ -62,6 +62,24 @@ python3 predict.py --input examen.jsonl --output respuestas.csv
 
 ![Del azar al 57 %](figuras/progreso.png)
 
+## Teach: Math Coach, la plataforma de clase en la placa
+
+El reto pide las dos cosas: **Reason** (el examen, todo lo de arriba) y **Teach**. La parte Teach es **Math Coach**, una app de App Lab que corre en la misma placa. Todo el detalle está en [`teach/README.md`](teach/README.md) y en [`teach/app/math-coach/README.md`](teach/app/math-coach/README.md), con capturas en [`teach/docs/screenshots/`](teach/docs/screenshots/).
+
+- **Para el alumno:** problemas del Canguro a su nivel, una **escalera de pistas que nunca da la respuesta** (1: un problema parecido más fácil ya resuelto; 2: el tema y el método; 3: una frase del modelo, que se descarta si revela la respuesta; 4: la solución, solo si la pide), tests, lecciones paso a paso y juegos en directo. La **matriz LED** muestra un tick o una cruz y el nivel.
+- **Para el docente:** resumen de la clase, mapa de habilidades por tema y nivel, y un asistente.
+- **M3Kang como mapa:** 810 problemas con embeddings bge-m3 agrupados en 24 familias por significado; de ahí sale el problema parecido más fácil de la pista 1.
+- **Un solo modelo para todo:** la pista 3 la escribe **el mismo `sopa_z10` del examen**, a través del servicio `math-llm`. Un puente (`teach/app/math-coach/board/llm_bridge.py`) deja que el contenedor de App Lab llegue a `127.0.0.1:8081` sin exponer el modelo a la red. No se carga ningún modelo más: RAM libre con todo encendido, ~2,4 GB.
+
+**Cómo convive con el examen (comprobado en la placa el 15/11):**
+```bash
+# arrancar la app (en la placa); abrir http://<ip-placa>:7000 desde la misma Wi-Fi
+bash ~/math-coach-src/math-coach/deploy/install_on_board.sh --restart
+# ANTES DEL EXAMEN: pararla, para que ninguna pista le quite el modelo a predict.py (una sola ranura, 60 s por problema)
+arduino-app-cli app stop ~/ArduinoApps/math-coach
+```
+El mapa de problemas (`bank.json`) y las soluciones escritas contienen texto de M3Kang (licencia solo de investigación): no están en el repositorio y se generan con el paso 2 de [`teach/README.md`](teach/README.md).
+
 ## Cómo funciona, en 30 segundos
 
 1. **El modelo no razona en prosa: escribe un programa.** Qwen3-1.7B traduce el enunciado a 5-8 líneas de Python. La CPU las ejecuta en milisegundos y el resultado se casa con una de las cinco opciones. Cuando el programa casa con una opción, acierta el 90 % de las veces.

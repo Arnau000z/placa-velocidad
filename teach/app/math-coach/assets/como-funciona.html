@@ -1,0 +1,362 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cómo funciona Math Coach</title>
+<meta name="description" content="Math Coach: plataforma de matemáticas para toda la clase con IA que funciona dentro de una Arduino UNO Q, sin internet.">
+<style>
+@font-face { font-family: "Nunito"; font-style: normal; font-display: swap; font-weight: 200 1000;
+  src: url("fonts/nunito-latin-wght-normal.woff2") format("woff2-variations"); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+2000-206F, U+20AC, U+2122, U+2190-2193, U+2212; }
+@font-face { font-family: "Nunito"; font-style: normal; font-display: swap; font-weight: 200 1000;
+  src: url("fonts/nunito-latin-ext-wght-normal.woff2") format("woff2-variations"); unicode-range: U+0100-02FF, U+1E00-1EFF, U+2C60-2C7F, U+A720-A7FF; }
+:root {
+  --bg: #f3f5fb; --surface: #ffffff; --surface-2: #f6f8fd; --surface-3: #eef1f9; --ink: #18203a; --ink-2: #3f4a66; --muted: #5b6580;
+  --line: #e1e6f1; --line-2: #cfd6e6; --brand: #3b5bdb; --brand-ink: #2f49c4; --brand-soft: #e8edff; --good: #2b7a3b; --good-soft: #e3f6e8;
+  --bad: #c92a2a; --bad-soft: #fde8ef; --sun: #ffb703; --sun-soft: #fff4d4; --sun-ink: #8a5a00; --test: #6741d9; --game: #c2410c; --learn: #087f5b;
+  --shadow: 0 1px 2px rgba(24, 32, 58, .05), 0 6px 20px rgba(24, 32, 58, .07);
+  --font: "Nunito", ui-rounded, "Segoe UI", system-ui, -apple-system, Roboto, Arial, sans-serif; color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f1424; --surface: #182036; --surface-2: #1d2640; --surface-3: #232d4b; --ink: #eef1fb; --ink-2: #c3cae0; --muted: #a3abc4;
+    --line: #2a3452; --line-2: #39456a; --brand: #7591ff; --brand-ink: #9fb2ff; --brand-soft: #23305e; --good: #51cf66; --good-soft: #17351f;
+    --bad: #ff8787; --bad-soft: #3d1a29; --sun-soft: #3b3115; --sun-ink: #ffd677; --shadow: 0 1px 2px rgba(0,0,0,.3), 0 6px 20px rgba(0,0,0,.25); color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f1424; --surface: #182036; --surface-2: #1d2640; --surface-3: #232d4b; --ink: #eef1fb; --ink-2: #c3cae0; --muted: #a3abc4;
+  --line: #2a3452; --line-2: #39456a; --brand: #7591ff; --brand-ink: #9fb2ff; --brand-soft: #23305e; --good: #51cf66; --good-soft: #17351f;
+  --bad: #ff8787; --bad-soft: #3d1a29; --sun-soft: #3b3115; --sun-ink: #ffd677; --shadow: 0 1px 2px rgba(0,0,0,.3), 0 6px 20px rgba(0,0,0,.25); color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+body { margin: 0; font-family: var(--font); color: var(--ink); background: var(--bg); line-height: 1.6; font-size: 17px; }
+a { color: var(--brand-ink); }
+.wrap { max-width: 1180px; margin: 0 auto; padding: 0 16px; }
+header.hero { background: linear-gradient(135deg, #3b5bdb 0%, #5f3dc4 60%, #087f5b 130%); color: #fff; padding: 56px 0 44px; }
+.hero .wrap { display: grid; grid-template-columns: 1fr auto; gap: 24px; align-items: center; }
+.hero h1 { font-size: clamp(2rem, 5vw, 3.1rem); line-height: 1.1; margin: 0 0 12px; letter-spacing: -.01em; }
+.hero p { font-size: 1.2rem; max-width: 62ch; margin: 0 0 18px; opacity: .95; }
+.hero svg { width: 150px; height: 150px; }
+.hero .cta { display: flex; gap: 10px; flex-wrap: wrap; }
+.btn { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 10px 18px; border-radius: 14px; font-weight: 800; text-decoration: none;
+  background: #fff; color: #2f49c4; box-shadow: 0 4px 0 rgba(0, 0, 0, .2); }
+.btn.ghost { background: rgba(255, 255, 255, .15); color: #fff; box-shadow: none; border: 2px solid rgba(255, 255, 255, .5); }
+@media (max-width: 700px) { .hero .wrap { grid-template-columns: 1fr; } .hero svg { display: none; } }
+.kpis { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 12px; margin: -28px 0 0; position: relative; }
+@media (max-width: 960px) { .kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 520px) { .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.kpi { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 14px 16px; box-shadow: var(--shadow); }
+.kpi b { display: block; font-size: 1.7rem; line-height: 1.15; font-variant-numeric: tabular-nums; }
+.kpi span { color: var(--muted); font-size: .86rem; font-weight: 700; }
+.layout { display: grid; grid-template-columns: 230px minmax(0, 1fr); gap: 32px; margin: 36px auto 60px; }
+@media (max-width: 900px) { .layout { grid-template-columns: 1fr; } nav.toc { display: none; } }
+nav.toc { position: sticky; top: 16px; align-self: start; font-size: .92rem; }
+nav.toc b { display: block; margin-bottom: 8px; color: var(--muted); font-size: .8rem; text-transform: uppercase; letter-spacing: .05em; }
+nav.toc a { display: block; padding: 6px 10px; border-radius: 10px; color: var(--ink-2); text-decoration: none; font-weight: 700; }
+nav.toc a:hover { background: var(--surface-3); }
+section { margin-bottom: 44px; scroll-margin-top: 16px; }
+h2 { font-size: 1.65rem; line-height: 1.2; margin: 0 0 6px; display: flex; gap: 12px; align-items: center; }
+h2 .n { width: 38px; height: 38px; border-radius: 12px; background: var(--brand); color: #fff; display: grid; place-items: center; font-size: 1.05rem; flex: none; }
+h3 { font-size: 1.15rem; margin: 18px 0 6px; }
+.lead { color: var(--ink-2); font-size: 1.08rem; margin: 0 0 16px; max-width: 75ch; }
+p { max-width: 75ch; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 20px; padding: 20px; box-shadow: var(--shadow); }
+.grid2 { display: grid; gap: 16px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.grid3 { display: grid; gap: 16px; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.grid4 { display: grid; gap: 14px; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+@media (max-width: 860px) { .grid2, .grid3, .grid4 { grid-template-columns: 1fr; } }
+.quote { border-left: 5px solid var(--sun); background: var(--sun-soft); color: var(--ink); padding: 16px 20px; border-radius: 0 16px 16px 0; font-size: 1.15rem; font-weight: 700; }
+.act { border-radius: 20px; padding: 18px; color: #fff; }
+.act b { font-size: 1.15rem; display: block; margin-bottom: 4px; }
+.act p { margin: 0; font-size: .95rem; opacity: .95; }
+.act .ai { display: inline-block; margin-top: 10px; font-size: .78rem; font-weight: 800; background: rgba(255,255,255,.18); border-radius: 99px; padding: 2px 10px; }
+.a1 { background: #3b5bdb; } .a2 { background: #6741d9; } .a3 { background: #c2410c; } .a4 { background: #087f5b; }
+table { width: 100%; border-collapse: collapse; font-size: .95rem; background: var(--surface); }
+.tw { overflow-x: auto; border: 1px solid var(--line); border-radius: 16px; }
+th { text-align: left; font-size: .78rem; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); background: var(--surface-2); padding: 10px 12px; border-bottom: 1px solid var(--line); }
+td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tr:last-child td { border-bottom: 0; }
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.tag { display: inline-block; font-size: .78rem; font-weight: 800; border-radius: 99px; padding: 2px 10px; background: var(--surface-3); color: var(--ink-2); white-space: nowrap; }
+.tag.board { background: var(--good-soft); color: var(--good); } .tag.laptop { background: var(--brand-soft); color: var(--brand-ink); }
+.ladder { display: grid; gap: 10px; }
+.rung { display: grid; grid-template-columns: 44px 1fr auto; gap: 14px; align-items: center; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 12px 16px; }
+.rung .k { width: 40px; height: 40px; border-radius: 50%; background: var(--sun); color: #3a2600; display: grid; place-items: center; font-weight: 900; }
+.rung .c { font-weight: 800; color: var(--muted); font-size: .9rem; }
+.bar { height: 12px; background: var(--surface-3); border-radius: 0 4px 4px 0; overflow: hidden; }
+.bar i { display: block; height: 100%; background: var(--brand); border-radius: 0 4px 4px 0; }
+.metric { display: grid; grid-template-columns: 220px 1fr 64px; gap: 12px; align-items: center; margin: 8px 0; font-size: .95rem; }
+.metric .v { font-weight: 800; text-align: right; font-variant-numeric: tabular-nums; }
+@media (max-width: 600px) { .metric { grid-template-columns: 1fr 64px; } .metric .bar { grid-column: 1 / -1; grid-row: 2; } }
+.diagram { width: 100%; height: auto; display: block; }
+.diagram .box { fill: var(--surface); stroke: var(--line-2); stroke-width: 1.5; }
+.diagram .zone { fill: var(--surface-2); stroke: var(--line-2); stroke-dasharray: 6 5; }
+.diagram .zone.board { fill: var(--good-soft); stroke: var(--good); }
+.diagram text { fill: var(--ink); font-family: var(--font); font-size: 13px; }
+.diagram .t { font-weight: 800; font-size: 14px; }
+.diagram .s { fill: var(--muted); font-size: 11.5px; }
+.diagram .z { font-weight: 900; font-size: 13px; fill: var(--ink-2); letter-spacing: .04em; }
+.diagram .arrow { stroke: var(--brand); stroke-width: 2; fill: none; marker-end: url(#ah); }
+.diagram .arrow.dash { stroke-dasharray: 5 4; }
+.diagram #ah path { fill: var(--brand); }
+.note { font-size: .9rem; color: var(--muted); }
+ul.clean { padding-left: 20px; margin: 8px 0; } ul.clean li { margin: 4px 0; }
+code { font-family: ui-monospace, Consolas, monospace; font-size: .88em; background: var(--surface-3); padding: 1px 6px; border-radius: 6px; }
+pre { background: #18203a; color: #e8edff; padding: 16px; border-radius: 16px; overflow-x: auto; font-size: .88rem; }
+footer { border-top: 1px solid var(--line); padding: 24px 0 40px; color: var(--muted); font-size: .9rem; }
+:focus-visible { outline: 3px solid var(--brand); outline-offset: 2px; border-radius: 8px; }
+@media print { header.hero { background: #3b5bdb !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; } nav.toc { display: none; } .layout { display: block; } section { break-inside: avoid-page; } }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="roo" viewBox="0 0 120 120">
+    <path d="M40 92 C 14 98, 6 84, 10 70 C 16 82, 28 86, 44 82 Z" fill="#d98a43"/>
+    <ellipse cx="60" cy="76" rx="25" ry="29" fill="#f0a35a"/><ellipse cx="64" cy="84" rx="14" ry="15" fill="#ffd9a6"/>
+    <ellipse cx="44" cy="104" rx="16" ry="6" fill="#d98a43"/><ellipse cx="74" cy="105" rx="14" ry="5.5" fill="#d98a43"/>
+    <ellipse cx="66" cy="20" rx="5" ry="13" fill="#f0a35a" transform="rotate(-12 66 20)"/><ellipse cx="78" cy="19" rx="5" ry="13" fill="#f0a35a" transform="rotate(14 78 19)"/>
+    <ellipse cx="71" cy="40" rx="16" ry="14" fill="#f0a35a"/><ellipse cx="84" cy="45" rx="10" ry="7.5" fill="#ffd9a6"/>
+    <circle cx="92" cy="43" r="2.6" fill="#3b2a1e"/><circle cx="74" cy="36" r="3.2" fill="#2b1d14"/><circle cx="75.2" cy="34.8" r="1.1" fill="#fff"/>
+    <path d="M80 50 q 5 4 10 0" stroke="#3b2a1e" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <path d="M60 76 l3 6 l6 1 l-4.5 4 l1.2 6 l-5.7 -3 l-5.7 3 l1.2 -6 l-4.5 -4 l6 -1 z" fill="#ffc23d"/>
+  </symbol>
+</svg>
+
+<header class="hero">
+  <div class="wrap">
+    <div>
+      <h1>Cómo funciona Math Coach</h1>
+      <p>Una plataforma de matemáticas para toda la clase que vive dentro de una <b>Arduino UNO Q</b>, sin internet. La IA ayuda al
+        alumno sin darle la respuesta y explica al profesor qué necesita cada alumno, con pruebas de que funciona.</p>
+      <div class="cta"><a class="btn" href="./">Abrir la aplicación</a><a class="btn ghost" href="#evidencia">Ver las pruebas</a></div>
+    </div>
+    <svg aria-hidden="true"><use href="#roo"/></svg>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="kpis" aria-label="Cifras clave">
+    <div class="kpi"><b>810</b><span>problemas del Cangur</span></div>
+    <div class="kpi"><b>3</b><span>idiomas: ca, es, en</span></div>
+    <div class="kpi"><b>&lt; 1 GB</b><span>en la placa, con el modelo</span></div>
+    <div class="kpi"><b>0</b><span>datos fuera del aula</span></div>
+    <div class="kpi"><b>0</b><span>pistas con la respuesta mostradas</span></div>
+    <div class="kpi"><b>97%</b><span>traducciones verificadas</span></div>
+  </div>
+
+  <div class="layout">
+    <nav class="toc" aria-label="Índice">
+      <b>Índice</b>
+      <a href="#idea">1. La idea</a><a href="#arquitectura">2. Arquitectura</a><a href="#alumno">3. El alumno</a><a href="#pistas">4. Escalera de pistas</a>
+      <a href="#profe">5. El profesor</a><a href="#ia">6. La IA, pieza a pieza</a><a href="#evidencia">7. Cómo sabemos que funciona</a>
+      <a href="#placa">8. Cabe en la placa</a><a href="#privacidad">9. Privacidad</a><a href="#diseno">10. Diseño y accesibilidad</a>
+      <a href="#limites">11. Límites</a><a href="#uso">12. Ponerlo en marcha</a>
+    </nav>
+
+    <main>
+      <section id="idea">
+        <h2><span class="n">1</span>La idea</h2>
+        <p class="lead">Practicar matemáticas funciona cuando cada alumno trabaja a su nivel y el profesor sabe a quién ayudar. Math Coach hace las dos cosas en una
+          placa que cabe en la mano: los alumnos se conectan a su Wi-Fi desde cualquier navegador, y todo, incluida la IA, se ejecuta en el aula.</p>
+        <p class="quote">La IA calcula los hechos y el sistema los explica. El modelo de lenguaje solo se usa donde su salida se puede verificar.</p>
+      </section>
+
+      <section id="arquitectura">
+        <h2><span class="n">2</span>Arquitectura</h2>
+        <p class="lead">Lo pesado se prepara una vez en un portátil; en el aula, la placa lo hace todo sola.</p>
+        <div class="card">
+          <svg class="diagram" viewBox="0 0 900 430" role="img" aria-label="Diagrama: el portátil prepara los datos una vez; la placa sirve la aplicación, el modelo de lenguaje y la matriz LED a los alumnos y al profesor por Wi-Fi.">
+            <defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 10 5 0 10z"/></marker></defs>
+            <rect class="zone" x="10" y="10" width="250" height="410" rx="18"/>
+            <text class="z" x="28" y="38">PORTÁTIL · UNA VEZ</text>
+            <rect class="box" x="28" y="58" width="214" height="62" rx="12"/><text class="t" x="42" y="84">bge-m3 (embeddings)</text><text class="s" x="42" y="104">vectores de los 810 problemas</text>
+            <rect class="box" x="28" y="138" width="214" height="62" rx="12"/><text class="t" x="42" y="164">SalamandraTA-7B (BSC)</text><text class="s" x="42" y="184">traduce las soluciones a ca/es</text>
+            <rect class="box" x="28" y="218" width="214" height="62" rx="12"/><text class="t" x="42" y="244">5 comprobaciones</text><text class="s" x="42" y="264">números, símbolos, idioma, sentido</text>
+            <rect class="box" x="28" y="318" width="214" height="80" rx="12"/><text class="t" x="42" y="344">bank.json + traducciones</text><text class="s" x="42" y="364">6 MB de datos listos</text><text class="s" x="42" y="382">se copian a la placa</text>
+            <path class="arrow" d="M135 120v14"/><path class="arrow" d="M135 200v14"/><path class="arrow" d="M135 280v34"/>
+            <rect class="zone board" x="300" y="10" width="420" height="410" rx="18"/>
+            <text class="z" x="318" y="38">ARDUINO UNO Q · EN EL AULA, SIN INTERNET</text>
+            <rect class="box" x="318" y="58" width="384" height="150" rx="12"/><text class="t" x="332" y="84">Aplicación (App Lab, Python)</text>
+            <text class="s" x="332" y="106">main.py · API web para alumnos y profesor</text><text class="s" x="332" y="126">coach.py · mapa, entrenador, escalera de pistas</text>
+            <text class="s" x="332" y="146">insights.py · el asistente del profesor (IRT, tiempos…)</text><text class="s" x="332" y="166">school.py · clases, PIN, pruebas, partidas</text>
+            <text class="s" x="332" y="186">SQLite · respuestas y progreso</text>
+            <rect class="box" x="318" y="230" width="184" height="80" rx="12"/><text class="t" x="332" y="256">Qwen3.5 0.8B</text><text class="s" x="332" y="276">llama.cpp · pista nº 3</text><text class="s" x="332" y="294">0,84 GB</text>
+            <rect class="box" x="518" y="230" width="184" height="80" rx="12"/><text class="t" x="532" y="256">Matriz LED 8×13</text><text class="s" x="532" y="276">✓ / ✗ y el nivel</text><text class="s" x="532" y="294">microcontrolador</text>
+            <rect class="box" x="318" y="330" width="384" height="70" rx="12"/><text class="t" x="332" y="356">Wi-Fi de la placa · http://placa:7000</text><text class="s" x="332" y="378">una página web, sin instalar nada</text>
+            <path class="arrow" d="M410 208v18"/><path class="arrow" d="M610 208v18"/><path class="arrow" d="M510 310v16"/>
+            <path class="arrow dash" d="M242 358h72"/>
+            <rect class="zone" x="760" y="10" width="130" height="410" rx="18"/><text class="z" x="776" y="38">EN CLASE</text>
+            <rect class="box" x="772" y="110" width="106" height="74" rx="12"/><text class="t" x="786" y="140">Alumnos</text><text class="s" x="786" y="160">tablets, PC</text>
+            <rect class="box" x="772" y="246" width="106" height="74" rx="12"/><text class="t" x="786" y="276">Profesor</text><text class="s" x="786" y="296">navegador</text>
+            <path class="arrow" d="M702 352 C 740 352 740 160 768 150" /><path class="arrow" d="M702 365 C 745 365 745 285 768 283"/>
+          </svg>
+        </div>
+      </section>
+
+      <section id="alumno">
+        <h2><span class="n">3</span>El alumno</h2>
+        <p class="lead">Elige su nombre en la lista de su clase y escribe su PIN de 4 cifras. En su inicio ve su nivel, sus puntos, sus insignias y cuatro actividades.</p>
+        <div class="grid4">
+          <div class="act a1"><b>Practica</b><p>Problemas a su nivel. Si acierta sube; si falla, uno parecido más fácil. Escalera de pistas si se atasca.</p><span class="ai">IA: mapa bge-m3 + modelo de habilidad</span></div>
+          <div class="act a2"><b>Prueba</b><p>Sin pistas, del nivel recomendado o la que ha puesto el profesor. Al final, revisión con explicaciones.</p><span class="ai">IA: nivel recomendado</span></div>
+          <div class="act a3"><b>Juega con amigos</b><p>Una sala con código, la misma pregunta para todos; puntos por acertar y por rapidez. Podio al final.</p><span class="ai">IA: nivel del grupo</span></div>
+          <div class="act a4"><b>Aprende paso a paso</b><p>396 problemas resueltos, explicados despacio: qué preguntan, qué datos hay, qué idea usar, intentarlo y la solución.</p><span class="ai">IA: traducción verificada</span></div>
+        </div>
+        <h3>Inspirado en lo que ya funciona</h3>
+        <ul class="clean">
+          <li><b>Duolingo:</b> barra de progreso de la sesión, elegir y luego «Comprobar», y una barra inferior con el resultado y un solo botón «Continuar».</li>
+          <li><b>Khan Academy:</b> cuatro niveles de dominio por tema (Intentado, Familiar, Competente, Dominado).</li>
+          <li><b>Kahoot:</b> en el juego, cada respuesta tiene un color <i>y</i> una forma, para que nadie dependa solo del color.</li>
+        </ul>
+      </section>
+
+      <section id="pistas">
+        <h2><span class="n">4</span>La escalera de pistas</h2>
+        <p class="lead">Ayuda sin regalar la respuesta: cada peldaño ayuda un poco más y da menos puntos.</p>
+        <div class="ladder">
+          <div class="rung"><span class="k">1</span><div><b>Un problema parecido y más fácil, ya resuelto</b><br><span class="note">El más cercano en el mapa bge-m3, de nivel inferior, nunca con el mismo valor de respuesta ni una copia del mismo problema.</span></div><span class="c">−25%</span></div>
+          <div class="rung"><span class="k">2</span><div><b>Tema y método</b><br><span class="note">El tema que comparten el problema y sus 5 vecinos, y su método en una frase.</span></div><span class="c">−50%</span></div>
+          <div class="rung"><span class="k">3</span><div><b>Pista de la IA (Qwen3.5 0.8B, en la placa)</b><br><span class="note">Se rechaza si contiene el valor de la respuesta, nombra la letra o no enseña nada; 2 intentos y, si no, el método. Se prepara mientras el alumno lee el peldaño 1.</span></div><span class="c">−75%</span></div>
+          <div class="rung"><span class="k">4</span><div><b>La solución</b><br><span class="note">Solo después de confirmar; no da puntos, pero enseña.</span></div><span class="c">0 puntos</span></div>
+        </div>
+      </section>
+
+      <section id="profe">
+        <h2><span class="n">5</span>El profesor</h2>
+        <p class="lead">Los paneles para profesores suelen enseñar datos sin decir qué hacer. Este empieza por las decisiones: «Qué haría hoy», cada acción con su botón.</p>
+        <div class="grid3">
+          <div class="card"><h3>Resumen de la IA</h3><p class="note">Qué haría hoy, informe en frases (quién necesita ayuda, quién responde al azar, ideas erróneas compartidas, grupos de refuerzo), nivel de la clase y actividad.</p></div>
+          <div class="card"><h3>Competencias y grupos</h3><p class="note">Mapa alumnos × familias ajustado por dificultad, grupos de trabajo de la IA y un índice de riesgo explicable.</p></div>
+          <div class="card"><h3>Tiempo de respuesta</h3><p class="note">Qué temas hacen pensar más y el ritmo de cada alumno: seguro, reflexivo, atascado, impulsivo o con dificultades.</p></div>
+          <div class="card"><h3>Errores y conceptos</h3><p class="note">Familias que más fallan, respuestas equivocadas compartidas y problemas más difíciles de lo que dice su nivel.</p></div>
+          <div class="card"><h3>Análisis de preguntas</h3><p class="note">Psicometría clásica: qué preguntas confunden a los que más saben y qué respuestas incorrectas atraen a quién.</p></div>
+          <div class="card"><h3>Informe completo</h3><p class="note">Todo en un documento para imprimir o guardar en PDF, con una recomendación por alumno.</p></div>
+        </div>
+      </section>
+
+      <section id="ia">
+        <h2><span class="n">6</span>La IA, pieza a pieza</h2>
+        <p class="lead">Distinguimos qué es IA, dónde se ejecuta y qué son solo reglas.</p>
+        <div class="tw"><table>
+          <thead><tr><th>Pieza</th><th>Tipo</th><th>Dónde</th><th>Para qué</th></tr></thead>
+          <tbody>
+            <tr><td><b>Qwen3.5 0.8B</b></td><td>Modelo de lenguaje</td><td><span class="tag board">placa</span></td><td>Pista nº 3, siempre comprobada antes de mostrarla</td></tr>
+            <tr><td><b>Modelo de habilidad (IRT 3PL)</b></td><td>Modelo estadístico que aprende con cada respuesta</td><td><span class="tag board">placa</span></td><td>Nivel real de cada alumno y dificultad real de cada problema para esa clase</td></tr>
+            <tr><td><b>Mapa bge-m3</b></td><td>Red neuronal de embeddings (1024 dimensiones)</td><td><span class="tag laptop">portátil</span> → <span class="tag board">placa</span></td><td>Problemas parecidos, siguiente problema, familias por significado</td></tr>
+            <tr><td><b>K-means</b></td><td>Aprendizaje no supervisado</td><td><span class="tag board">placa</span></td><td>24 familias de problemas y grupos de trabajo de alumnos</td></tr>
+            <tr><td><b>Modelo de tiempos</b></td><td>Log-normal por problema</td><td><span class="tag board">placa</span></td><td>Separar «lento» de «difícil»; perfiles de ritmo</td></tr>
+            <tr><td><b>SalamandraTA-7B</b> (BSC)</td><td>Modelo de traducción</td><td><span class="tag laptop">portátil, una vez</span></td><td>Soluciones en catalán y castellano, verificadas con bge-m3</td></tr>
+            <tr><td>Texto de los informes, alertas, índice de riesgo</td><td><i>No es IA:</i> plantillas y reglas sobre los resultados de los modelos</td><td><span class="tag board">placa</span></td><td>Explicar sin inventar; cada alerta dice por qué</td></tr>
+          </tbody></table></div>
+      </section>
+
+      <section id="evidencia">
+        <h2><span class="n">7</span>Cómo sabemos que funciona</h2>
+        <p class="lead">Cada modelo tiene su medida, y la aplicación las enseña en directo en «Fiabilidad de la IA».</p>
+        <div class="grid2">
+          <div class="card">
+            <h3>Predice si el alumno acertará</h3>
+            <p class="note">Antes de aprender de cada respuesta, el modelo la predice (evaluación precuencial, como un examen fuera de muestra). AUC: 0,5 = azar, 1 = perfecto.</p>
+            <div class="metric"><span>IA: habilidad + dificultad</span><div class="bar"><i style="width:63%"></i></div><span class="v">0,63</span></div>
+            <div class="metric"><span>Solo el nivel del problema</span><div class="bar"><i style="width:57%;background:var(--line-2)"></i></div><span class="v">0,57</span></div>
+            <div class="metric"><span>Solo el historial del alumno</span><div class="bar"><i style="width:47%;background:var(--line-2)"></i></div><span class="v">0,47</span></div>
+            <p class="note">Error de calibración 4,2%: cuando dice 70%, acierta ~70%. El historial del alumno lo hace peor que el azar porque el entrenador le pone problemas más difíciles cuando acierta; por eso hace falta un modelo que tenga en cuenta la dificultad. <i>Clase de demostración simulada (772 respuestas); en el aula se mide con respuestas reales.</i></p>
+          </div>
+          <div class="card">
+            <h3>Las pistas no regalan la respuesta</h3>
+            <p class="note">725 problemas de validación, mismo modelo y comprobaciones:</p>
+            <div class="metric"><span>Revelaban la respuesta (1er intento)</span><div class="bar"><i style="width:6.3%;background:var(--bad)"></i></div><span class="v">6,3%</span></div>
+            <div class="metric"><span>No enseñaban nada (1er intento)</span><div class="bar"><i style="width:22.3%;background:var(--sun)"></i></div><span class="v">22,3%</span></div>
+            <div class="metric"><span>Pistas con la respuesta mostradas</span><div class="bar"><i style="width:0%"></i></div><span class="v">0</span></div>
+            <p class="note">Las rechazadas se reintentan; si fallan dos veces, el alumno ve el método del tema.</p>
+          </div>
+          <div class="card">
+            <h3>Las traducciones dicen lo mismo</h3>
+            <p class="note">792 traducciones (396 soluciones × 2 idiomas) con SalamandraTA-7B; cada una pasa 5 comprobaciones.</p>
+            <div class="metric"><span>Aceptadas</span><div class="bar"><i style="width:97.1%;background:var(--good)"></i></div><span class="v">97,1%</span></div>
+            <div class="metric"><span>Sentido: original vs traducción</span><div class="bar"><i style="width:91%"></i></div><span class="v">0,91</span></div>
+            <div class="metric"><span>Sentido: textos sin relación</span><div class="bar"><i style="width:51%;background:var(--line-2)"></i></div><span class="v">0,51</span></div>
+            <p class="note">Similitud bge-m3 (mediana). El umbral sale de esa comparación. Las 23 rechazadas siguen en inglés y la página lo dice.</p>
+          </div>
+          <div class="card">
+            <h3>Las familias agrupan con sentido</h3>
+            <p class="note">Similitud media bge-m3 entre problemas:</p>
+            <div class="metric"><span>De la misma familia</span><div class="bar"><i style="width:57%"></i></div><span class="v">0,57</span></div>
+            <div class="metric"><span>De familias distintas</span><div class="bar"><i style="width:49%;background:var(--line-2)"></i></div><span class="v">0,49</span></div>
+            <h3>Y una decisión medida</h3>
+            <p class="note">Probamos que el modelo de la placa redactara el informe del profesor: no inventaba cifras, pero tergiversaba los hechos (2 de 4 borradores) y mezclaba idiomas. Por eso los informes se generan con plantillas a partir de los datos y no pueden inventar nada.</p>
+          </div>
+        </div>
+      </section>
+
+      <section id="placa">
+        <h2><span class="n">8</span>Cabe en la placa</h2>
+        <p class="lead">Arduino UNO Q: 4 GB de RAM y 32 GB de almacenamiento.</p>
+        <div class="tw"><table>
+          <thead><tr><th>Parte</th><th class="num">Disco</th><th class="num">Memoria</th></tr></thead>
+          <tbody>
+            <tr><td>Aplicación completa (Python + web + 810 problemas con vectores + traducciones)</td><td class="num">6,1 MB</td><td class="num">65 MB</td></tr>
+            <tr><td>Modelo de lenguaje Qwen3.5 0.8B (Q8_0)</td><td class="num">0,84 GB</td><td class="num">≈ 1 GB</td></tr>
+            <tr><td><b>Total</b></td><td class="num"><b>&lt; 1 GB de 32</b></td><td class="num"><b>≈ 1,1 GB de 4</b></td></tr>
+            <tr><td class="note">No van a la placa: SalamandraTA-7B (4,85 GB, no cabría en 4 GB de RAM) y bge-m3 (0,63 GB); prepararon los datos una vez.</td><td class="num">—</td><td class="num">—</td></tr>
+          </tbody></table></div>
+        <p class="note">Medido en el portátil (memoria de la app con el análisis completo del profesor). Tiempos medidos antes en la placa: responder y recibir el siguiente problema, 50 ms; la pista nº 3 tarda unos 26 s si nadie la ha preparado, y 0,0–0,1 s cuando se prepara mientras el alumno lee el peldaño 1.</p>
+      </section>
+
+      <section id="privacidad">
+        <h2><span class="n">9</span>Privacidad y seguridad</h2>
+        <ul class="clean">
+          <li><b>Nada sale del aula:</b> sin nube, sin cuentas, sin datos personales más allá del nombre que pone el profesor.</li>
+          <li><b>PIN de 4 cifras</b> guardados como hash PBKDF2 con sal (nunca en claro); 5 intentos fallidos bloquean 60 s.</li>
+          <li><b>Sesiones con token</b> por navegador; el PIN del profesor está en un fichero de la placa.</li>
+          <li><b>El asistente sugiere, el profesor decide:</b> ninguna decisión automática sobre los alumnos.</li>
+        </ul>
+      </section>
+
+      <section id="diseno">
+        <h2><span class="n">10</span>Diseño y accesibilidad</h2>
+        <ul class="clean">
+          <li><b>WCAG 2.2 AA:</b> contraste de texto ≥ 4,5:1 medido en cada par de colores; foco visible; botones de 44 px o más (el mínimo AA es 24 px).</li>
+          <li><b>Opciones para cada alumno:</b> tamaño de letra (3 pasos), alto contraste, tema claro/oscuro, menos animaciones, sonido, lectura en voz alta.</li>
+          <li><b>Funciona en móvil, tablet y ordenador</b>, con teclado (A–E, H para pista, Enter).</li>
+          <li><b>Sin dependencias externas:</b> la tipografía (Nunito, OFL) y los iconos (Lucide, ISC) van dentro de la placa.</li>
+          <li><b>Tres idiomas</b> en toda la interfaz: catalán, castellano e inglés.</li>
+        </ul>
+      </section>
+
+      <section id="limites">
+        <h2><span class="n">11</span>Límites</h2>
+        <ul class="clean">
+          <li>Con pocas respuestas los resultados son inciertos: no se marca nada con menos de 5 respuestas.</li>
+          <li>El modelo de habilidad supone una habilidad por alumno; el mapa de competencias añade el detalle por familia.</li>
+          <li>Las familias se forman automáticamente: sus nombres son orientativos.</li>
+          <li>El tiempo no distingue una distracción de una reflexión: se limita a 10 minutos y se compara con el esperado.</li>
+          <li>Solo problemas sin figura (810 de los del dataset); añadir los que tienen imagen es el siguiente paso.</li>
+          <li>Las salas de juego viven en memoria: reiniciar la aplicación termina las partidas en curso.</li>
+        </ul>
+      </section>
+
+      <section id="uso">
+        <h2><span class="n">12</span>Ponerlo en marcha</h2>
+        <p class="note">En el portátil (Windows + WSL), desde <code>llama-windows/</code>:</p>
+<pre>.\start-embed-m3.ps1        # bge-m3 en la GPU (solo para construir el mapa)
+.\build-bank.ps1            # crea python/data/bank.json
+.\translate-solutions.ps1   # traducciones verificadas (con start-salamandra.ps1)
+.\deploy-coach.ps1          # copia la app a la placa y la arranca
+
+.\dev-coach.ps1 -Demo       # o pruébalo en el portátil: http://127.0.0.1:7100</pre>
+        <p class="note">Los alumnos abren <code>http://&lt;ip-de-la-placa&gt;:7000</code> en la Wi-Fi de la placa.</p>
+      </section>
+    </main>
+  </div>
+</div>
+
+<footer>
+  <div class="wrap">Math Coach · Datathon FME 2026 · reto «Math on the Edge». Datos: M3Kang (solo investigación). Traducción: SalamandraTA-7B (BSC, GPL-3.0, solo en el portátil).
+    Tipografía Nunito (OFL) e iconos Lucide (ISC), ver <a href="THIRD-PARTY-LICENSES.txt">licencias</a>.</div>
+</footer>
+</body>
+</html>

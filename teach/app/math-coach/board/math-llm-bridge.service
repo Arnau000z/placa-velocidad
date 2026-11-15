@@ -1,0 +1,10 @@
+[Unit]
+Description=Math coach: lets App Lab containers reach the language model (172.17.0.1:8081 -> 127.0.0.1:8081)
+
+[Service]
+ExecStart=/usr/bin/python3 /home/arduino/math-coach-bridge/llm_bridge.py
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=default.target

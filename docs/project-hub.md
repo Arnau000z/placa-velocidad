@@ -98,6 +98,10 @@ python3 predict.py --input examen.jsonl --output respuestas.csv
 
 Código completo, documentación y todas las pruebas: **https://github.com/Arnau000z/placa-velocidad**
 
+### Teach: Math Coach
+
+La misma placa sirve una plataforma de clase (app de App Lab, puerto 7000) a los móviles y portátiles del aula por Wi-Fi. Cada alumno practica problemas del Canguro a su nivel con una escalera de pistas que nunca da la respuesta: primero un problema parecido más fácil ya resuelto (recuperado de un mapa de 810 problemas de M3Kang con embeddings bge-m3), después el tema y el método, después una frase del modelo de lenguaje (la misma `sopa_z10` del examen, filtrada para que no revele la respuesta) y, solo si la pide, la solución. La matriz LED muestra un tick o una cruz y el nivel. El docente ve el mapa de habilidades de la clase. Todo sin red y con un único modelo en memoria. Código y capturas: `teach/` en el repositorio.
+
 ## 5. Resultados
 
 Examen de prueba de la organización (50 problemas en inglés y catalán), con el reloj de la placa:
