@@ -59,7 +59,7 @@ El reto pide un copiloto que **haga las dos cosas** dentro de la placa: **Reason
 | **Todo dentro de la placa, sin red** | Servicio oficial `math-llm` con llama.cpp; Math Coach llega al modelo por un puente local (`172.17.0.1` → `127.0.0.1`), nunca por la Wi-Fi | La Wi-Fi solo sirve para que los móviles del aula abran la web de la placa |
 | **60 s por problema y 4 GB de RAM** | Caché del prompt de sistema, presupuesto de tokens según el tiempo que queda, parada al cerrar el código; **un solo modelo en memoria** para examen y clase | Máximo 53,8 s en la placa; el servidor ocupa 2,3 GB y quedan 2,4 GB libres con Math Coach encendido |
 | **Usar M3Kang de forma original** | Como **fábrica de entrenamiento** (programas verificados por ejecución), como **mapa por significado** (810 problemas, embeddings bge-m3, 24 familias) del que salen la pista 1 y la práctica, como **banco de lecciones** y como **banco de pruebas** | Del 37 % al 69 % entrenando con programas verificados; las familias del mapa agrupan problemas del mismo tema |
-| **Usar la placa: matriz LED** | El microcontrolador muestra ✓ o ✗ al responder y el nivel del alumno (sketch de [`teach/app/math-coach/sketch/`](teach/app/math-coach/sketch/)) | Se ve en la demo en directo |
+| **Usar la placa: matriz LED e interacción** | El microcontrolador muestra ✓ o ✗ al responder y el nivel del alumno (sketch de [`teach/app/math-coach/sketch/`](teach/app/math-coach/sketch/)); los alumnos se conectan **con su móvil** a la web de la placa para practicar, examinarse y jugar en directo | **Comprobado en la placa (15/11):** al responder desde el móvil, la matriz enseña el ✓ o la ✗ al momento |
 | **Medirlo y analizar los errores** por tema, idioma y dificultad | Todas las pruebas registradas en CSV y analizadas | [Análisis de errores](#análisis-de-errores-tema-idioma-nivel-y-causa) y [docs/06-resultados.md](docs/06-resultados.md) |
 
 **Los obstáculos que tuvo que superar `sopa_z10`**, uno a uno:
@@ -250,6 +250,7 @@ Con el servicio `math-llm` del reto cargando `sopa_z10` y el `predict.py` del eq
 | Tiempo por problema | media 36,3 s, mediana 35,6 s, **máximo 53,8 s, ninguno por encima de 60 s** |
 | `data/sample_problems.jsonl` del reto, por el servicio real | 5/5, entre 17 y 31 s |
 | Con la app Math Coach encendida a la vez | mismos tiempos (17-25 s en los ejemplos); 2,4 GB de RAM libres |
+| Math Coach desde el móvil | los alumnos entran con el móvil por la Wi-Fi de la placa, practican y se examinan; la matriz LED responde con ✓ o ✗ al momento |
 | Memoria y calor | el servidor ocupa 2,3 GB; temperatura máxima 73 °C, sin bajar de frecuencia |
 
 Este 22/26 es optimista: la sopa se eligió mirando este mismo examen de prueba. La cifra para problemas nuevos es la de val, que nunca se usó para elegir: 116/242 (48 %).

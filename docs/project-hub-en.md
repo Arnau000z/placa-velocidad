@@ -47,7 +47,7 @@ The same board serves an App Lab app (port 7000) to the classroom's phones and l
 3. one sentence from the language model (the same `sopa_z10` as the exam), rejected by code if it reveals the answer;
 4. the solution, only if the student asks for it.
 
-There are also tests, step-by-step lessons and live class games. The **LED matrix** shows a tick or a cross and the student's level, and the teacher gets a skills map of the class by topic and level. A small bridge lets the App Lab container reach the language model on 127.0.0.1 without exposing it to the network, so **a single model is loaded for everything** (about 2.4 GB of RAM still free).
+Students simply **connect with their phones** to the board's web page to practise, take tests and play live class games, and the **LED matrix** reacts instantly with a tick or a cross and the student's level (checked on the board on 15/11), and the teacher gets a skills map of the class by topic and level. A small bridge lets the App Lab container reach the language model on 127.0.0.1 without exposing it to the network, so **a single model is loaded for everything** (about 2.4 GB of RAM still free).
 
 | Teaching check | Result |
 |---|---|
