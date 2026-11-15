@@ -6,7 +6,7 @@ Todas las pruebas, en el orden en que se hicieron. Los datos crudos están en [`
 |---|---|
 | [`rejillas_nube.csv`](../pruebas/rejillas_nube.csv) | 284 exámenes de las máquinas de la nube: modelo, conjunto, variante, aciertos, desglose por idioma, tiempo estimado en la placa, % que cabe en 60 s y vías |
 | [`campana_ajuste_y_techos.csv`](../pruebas/campana_ajuste_y_techos.csv) | 49 exámenes de la primera campaña de ajuste fino y de los modelos grandes de referencia |
-| [`simulaciones_placa.csv`](../pruebas/simulaciones_placa.csv) | El `predict.py` final de cada candidato, a la velocidad medida en la placa |
+| [`simulaciones_placa.csv`](../pruebas/simulaciones_placa.csv) | 117 simulaciones del `predict.py` de cada candidato y cada sopa, a la velocidad medida en la placa (val con la vía de repetidos incluida) |
 | [`lider_desglose.csv`](../pruebas/lider_desglose.csv) | El modelo líder por idioma, nivel, tipo y vía |
 
 Sin indicación, todo se midió en la torre (RTX 5060 Ti) o en la nube con llama.cpp y GGUF, con los mismos parámetros que la placa (`--jinja --reasoning off`, temperatura 0, semilla 42).

@@ -113,3 +113,25 @@ Todos sobre Qwen3-1.7B salvo los `2b_*`. En la nube se examinan con la cadena de
 Las cifras de val texto eng+cat son sobre 246 filas, sin contar los 4 que resuelve el detector de repetidos. El registro completo de cada examen está en [`pruebas/rejillas_nube.csv`](../pruebas/rejillas_nube.csv) y [`pruebas/simulaciones_placa.csv`](../pruebas/simulaciones_placa.csv).
 
 ![Candidatos para la placa](../figuras/candidatos.png)
+
+### Tercera fase: sopas de modelos (15/11, 06:20-09:30)
+
+Promediar los pesos de varios LoRA del mismo Qwen3-1.7B ([`sopa_ligera.py`](../codigo/entrenamiento/sopa_ligera.py)) suma más que cualquiera de ellos por separado. Sumando la demo (100) y val sin repetidos (242), en la simulación de placa:
+
+| Sopa | Modelos | Demo | Val | Suma |
+|---|---|---|---|---|
+| `17b_lora32_v2` (solo) | 1 | 57 | 97 | 154 |
+| `sopa_v2_lr2e4` | 2 (v2) | 58 | 104 | 162 |
+| `sopa_v2v3` | 4 (v2 + v3) | 60 | 107 | 167 |
+| `sopa_v3` | 2 (v3) | 63 | 105 | 168 |
+| `sopa_v34` | 3 (v3 + v4) | 69 | 108 | 177 |
+| `sopa_v34z` | 5 (v3 + v4 + v4b) | 67 | 113 | 180 |
+| `sopa_z7` | 7 | 67 | 116 | 183 |
+| **`sopa_z10` (final)** | **10** | **69** | **116** | **185** |
+| `sopa_z9`, `sopa_z11`, `sopa_z11b` | 9-11 | | | 178-179 |
+
+`sopa_z10` está hecha con `17b_v3`, `17b_v3_2ep`, `17b_v3_lr2e4`, `17b_v4c`, `17b_v4b`, `17b_v4b_2ep`, `17b_v4c_2ep_s7`, `17b_v3_s7`, `17b_v3_s11` y `17b_v4b_s7`. La composición de cada sopa probada está en [`cola_sopas.txt`](../codigo/entrega/cola_sopas.txt).
+
+Las cifras de `sopa_z10` son con el `predict.py` congelado: todo a temperatura 0 y sin reintentos. Con reintentos a temperatura 0,7 daba 70 + 115, la misma suma. En la comprobación independiente en castellano (103 filas que no se usaron para elegir), todos los modelos ajustados sacan unos 8 puntos más que la base y empatan entre sí.
+
+En la tercera fase se dejó el Qwen3.5-2B: con los mismos datos suma 149, frente a 154 del 1.7B.
