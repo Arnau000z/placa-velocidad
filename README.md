@@ -4,7 +4,7 @@
 ![CPU](https://img.shields.io/badge/CPU-4%C3%97%20Cortex--A53-555)
 ![Modelo](https://img.shields.io/badge/modelo-Qwen3--1.7B%20%2B%20LoRA%20r32-6250d6)
 ![Motor](https://img.shields.io/badge/llama.cpp-2cbe0ec-2a78d6)
-![Examen de prueba](https://img.shields.io/badge/examen%20de%20prueba-57%20%25%20(baseline%2021%20%25)-1baf7a)
+![Examen de prueba](https://img.shields.io/badge/examen%20de%20prueba-69%20%25%20(baseline%2021%20%25)-1baf7a)
 
 Proyecto del equipo para el **Datathon FME 2026, reto de Qualcomm «Math on the Edge»**: resolver problemas del Canguro matemático (opción múltiple A-E, en inglés y catalán) con un modelo de lenguaje que corre **entero dentro de una Arduino UNO Q**. Sin red y con 60 segundos por problema, en una CPU que lee unos 4,6 tokens por segundo.
 
@@ -13,7 +13,8 @@ Proyecto del equipo para el **Datathon FME 2026, reto de Qualcomm «Math on the 
 | Azar | 20 % |
 | Baseline del reto (Qwen3.5-0.8B, letra directa) | ~21 % |
 | Qwen3-1.7B sin entrenar, con nuestro `predict.py` | 37 % |
-| **Qwen3-1.7B + LoRA entrenado con 9.603 programas verificados** | **57 %** |
+| Qwen3-1.7B + LoRA entrenado con 9.603 programas verificados | 57 % |
+| **Media de pesos de tres 1.7B entrenados con las mezclas v3 y v4 (17.904 programas)** | **69 %** |
 
 *Simulado con el reloj de la placa (4,6 / 2,7 tokens/s medidos), con el mismo `predict.py` y el mismo GGUF que van a la placa.*
 
@@ -100,13 +101,17 @@ flowchart LR
 
 M3Kang tiene licencia **solo para investigación**. Este repositorio **no incluye ningún enunciado, imagen ni índice de M3Kang**, solo identificadores de problema y resultados agregados. Los datos de entrenamiento y los modelos entrenados se quedan fuera del repositorio.
 
-## Estado (15/11/2026, 05:00)
+## Estado (15/11/2026, 06:50)
 
-- **Modelo líder:** `17b_lora32_v2` (Qwen3-1.7B + LoRA r32, mezcla v2, 9.603 ejemplos).
-  - Examen de prueba: 57/100 a velocidad de placa, sin ningún problema por encima de 56 s.
-  - Val en inglés y catalán: 89/246.
+- **Modelo líder:** `sopa_v34`, la media de los pesos de tres 1.7B entrenados con las mezclas v3 y v4.
+  - Examen de prueba: **69/100** a velocidad de placa, con 65 de 80 en los problemas de texto.
+  - Val en inglés y catalán, sin repetidos: 108/242.
+  - Cuando el programa casa con una opción, acierta 58 de 65.
+- **Cómo se llegó:**
+  - Los modelos sueltos se quedaban en 51-60/100.
+  - Promediar sus pesos («sopa de modelos») suma más que cualquiera de ellos.
+  - La mezcla v4 (17.904 ejemplos, con una generación masiva dirigida a los errores y sin programas que imprimen una constante) mejora la sopa.
 - **En marcha:**
-  - Mezcla v3 (16.313 ejemplos, con problemas dirigidos a las trampas en las que cae el modelo), entrenando.
-  - Una cuarta mezcla con una generación masiva dirigida a lógica, enunciados largos, medida, geometría sin figura y catalán.
-  - Promedio de pesos de los mejores modelos.
+  - Los modelos de la v4b (19.984 ejemplos).
+  - Sopas más grandes.
 - **Siguiente:** medir el elegido en la placa con el kit, congelar la versión y entregar.
