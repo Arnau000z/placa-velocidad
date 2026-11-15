@@ -101,7 +101,7 @@ flowchart LR
 
 M3Kang tiene licencia **solo para investigación**. Este repositorio **no incluye ningún enunciado, imagen ni índice de M3Kang**, solo identificadores de problema y resultados agregados. Los datos de entrenamiento y los modelos entrenados se quedan fuera del repositorio.
 
-## Estado (15/11/2026, 06:50)
+## Estado (15/11/2026, 07:40)
 
 - **Modelo líder:** `sopa_v34`, la media de los pesos de tres 1.7B entrenados con las mezclas v3 y v4.
   - Examen de prueba: **69/100** a velocidad de placa, con 65 de 80 en los problemas de texto.

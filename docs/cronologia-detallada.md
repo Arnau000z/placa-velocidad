@@ -634,7 +634,7 @@ Notas: «LLM grande de API» agrupa todos los modelos grandes de API usados para
 - **05:47** **Fallo cazado antes de entrenar:** 365 de los ejemplos nuevos son programas de una línea tipo `print(6)`. Cuando el resolvedor a ciegas daba un programa más corto, se usaba el suyo, y qwen3.6 a veces imprime la constante. El entrenamiento de v4 se para al minuto. Al revisar aparece el mismo vicio en las mezclas anteriores: 141 constantes en v2 y 289 en v3.
 - **05:54** **v4 corregida (17.904 ejemplos).** Fuera las «constantes puras» de todas las fuentes (`print(48)`, o `x = 48` y `print(x)` sin ninguna operación), con 343 menos en la parte v3. Se quedan los de una línea que sí calculan, como `print(36 // 3 - 36 // 4)`: en la placa cada token cuesta 0,37 s.
 - **06:15** **v4b (19.984 ejemplos):** 4.014 problemas dirigidos con doble filtro (coinciden el 87 %), 2.111 de ellos en catalán. El filtro a ciegas se cortó al 82 % por falta de memoria en la torre. Lo hecho estaba guardado por problema, así que se montó la mezcla con eso.
-- **06:20-06:50** **Sopas de modelos.** Se promedian los pesos de varios 1.7B entrenados: 1 minuto y 4,5 GB de RAM con `sopa_ligera.py`. Sumando la demo (100) y val sin repetidos (242):
+- **06:20-07:40** **Sopas de modelos.** Se promedian los pesos de varios 1.7B entrenados: 1 minuto y 4,5 GB de RAM con `sopa_ligera.py`. Sumando la demo (100) y val sin repetidos (242):
 
   | Sopa | Demo | Val | Suma |
   |---|---|---|---|
