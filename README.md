@@ -17,13 +17,18 @@ Proyecto del equipo para el **Datathon FME 2026, reto de Qualcomm «Math on the 
 | Media de pesos de tres 1.7B entrenados con las mezclas v3 y v4 | 69 % |
 | **Modelo final: media de pesos de diez 1.7B entrenados con las mezclas v3, v4 y v4b** | **69 %** |
 
-*Simulado con el reloj de la placa (4,6 / 2,7 tokens/s medidos), con el mismo `predict.py` y el mismo GGUF que van a la placa.*
+*Simulado con el reloj de la placa (4,6 / 2,7 tokens/s medidos), con el mismo `predict.py` y el mismo GGUF que van a la placa.* **Comprobado después en la placa real** (15/11): 22/26 problemas del examen de prueba, 36 s de media por problema y 54 s como máximo, ninguno por encima de 60 s ([detalle](#verificación-en-la-placa-real-15112026)).
+
+> **In English.** Our entry for the Qualcomm "Math on the Edge" challenge (Datathon FME 2026) does both things the challenge asks for, fully offline on one Arduino UNO Q 4 GB:
+> - **Reason:** a Qwen3-1.7B fine-tuned with LoRA (an average of 10 runs, `sopa_z10`, GGUF Q8_0) does not reason in prose: it writes a short Python program that the board runs and matches against the five options. 69% on the organisers' practice exam with the board's clock (baseline 21%), 22/26 verified on the real board, every problem under 60 s. Entry point: [`equipo/predict.py`](equipo/predict.py); installer: [`instalar_en_placa.sh`](instalar_en_placa.sh); model: the [`modelo-final` release](https://github.com/Arnau000z/placa-velocidad/releases).
+> - **Teach:** [Math Coach](teach/README.md), an App Lab app served by the board to the classroom (port 7000): Kangaroo problems at each student's level, a hint ladder that never gives the answer away (similar easier solved problem from an M3Kang map, then topic and method, then one sentence from the same model, filtered by code), tests, lessons, live games, a teacher's skills map, and a tick/cross and the level on the LED matrix.
+> - **Results and error analysis** by topic, language, level and cause: [below](#análisis-de-errores-tema-idioma-nivel-y-causa) and in [docs/06-resultados.md](docs/06-resultados.md). The rest of this README is in Spanish.
 
 ## Probar el sistema completo en la placa (3 pasos)
 
 Hace falta la placa con el repo del reto ya montado (pasos 0-10 de su README) y conectada por USB-C al PC.
 
-**1. En el PC:** copia este kit, nuestro `predict.py` y el modelo final (1,83 GB, unos minutos por USB):
+**1. En el PC:** copia este kit, nuestro `predict.py` y el modelo final (1,83 GB, unos minutos por USB). El modelo se descarga de la [*release* `modelo-final`](https://github.com/Arnau000z/placa-velocidad/releases); si la placa tiene red, `instalar_en_placa.sh` lo baja solo (ver [Montarlo en una placa nueva](#montarlo-en-una-placa-nueva)):
 ```powershell
 cd D:\Datathon_A\placa-velocidad
 .\subir_a_placa.ps1 -Extra D:\Datathon_A\modelos_entrenados\sopa_z10-Q8_0.gguf
@@ -173,6 +178,30 @@ Los cambios que más movieron la nota, en orden. Todas las pruebas, con su conju
 | 12 | + Media de pesos de varios LoRA («sopa») | demo (100) | 60 % → 69 % |
 | 13 | **Modelo final** `sopa_z10`, temperatura 0 | demo (100) · val texto (242) | **69 %** · **116/242 (48 %)** |
 
+## Verificación en la placa real (15/11/2026)
+
+Con el servicio `math-llm` del reto cargando `sopa_z10` y el `predict.py` del equipo copiado al repo del reto, igual que lo ejecutará el jurado:
+
+| Prueba | Resultado |
+|---|---|
+| 26 problemas del examen de prueba (13 en inglés y 13 en catalán, todos los niveles, 5 con figura) | **22/26**: texto 19/21, figura 3/5; inglés 13/13, catalán 9/13 |
+| Tiempo por problema | media 36,3 s, mediana 35,6 s, **máximo 53,8 s, ninguno por encima de 60 s** |
+| `data/sample_problems.jsonl` del reto, por el servicio real | 5/5, entre 17 y 31 s |
+| Con la app Math Coach encendida a la vez | mismos tiempos (17-25 s en los ejemplos); 2,4 GB de RAM libres |
+| Memoria y calor | el servidor ocupa 2,3 GB; temperatura máxima 73 °C, sin bajar de frecuencia |
+
+Este 22/26 es optimista: la sopa se eligió mirando este mismo examen de prueba. La cifra para problemas nuevos es la de val, que nunca se usó para elegir: 116/242 (48 %).
+
+## Análisis de errores: tema, idioma, nivel y causa
+
+Resumen; las tablas completas están en [docs/06-resultados.md](docs/06-resultados.md#análisis-de-errores).
+
+- **Por tema** (Qwen3-1.7B, 349 problemas de texto de val): probabilidad 71 %, aritmética 52 %, teoría de números 49 %, conteo 47 %, álgebra 44 %, geometría sin figura 42 %, medida 38 %, **lógica 27 %**.
+- **Por idioma** (modelo final): inglés 76 % y catalán 62 % en el examen de prueba; 51 % y 45 % en val. El catalán va por detrás con todos los modelos.
+- **Por nivel:** la dificultad no crece de forma limpia. Los niveles altos tienen más problemas «calculables» (álgebra, teoría de números) que el programa resuelve bien; los bajos, más lógica y lectura literal.
+- **Por longitud:** enunciados de menos de 40 palabras, 61 %; de 40 a 80, 33 %.
+- **Por causa:** el 75 % de los fallos de texto son de **planteamiento** (olvidar una condición, contar pares dos veces, invertir una relación), no de cálculo ni de tiempo. Los problemas con figura fallan sobre todo porque el modelo no ve el dibujo.
+
 ## Documentación
 
 | | |
@@ -201,7 +230,9 @@ Los cambios que más movieron la nota, en orden. Todas las pruebas, con su conju
 │   ├── entrenamiento/       LoRA / ajuste completo, GRPO, exportación a GGUF, mezcla de datos
 │   ├── datos_sinteticos/    generadores con modelos abiertos y verificación por ejecución
 │   └── nube/                alquiler y control de máquinas, vigía con colas
-├── equipo/predict.py        el predict.py que se copia a la placa
+├── equipo/predict.py        el predict.py que se copia a la placa (el que ejecuta el jurado)
+├── teach/                   Teach: la app Math Coach (App Lab), su documentación y capturas
+├── instalar_en_placa.sh     instala el modelo final y nuestro predict.py en la placa y lo prueba
 └── 00_preparar.sh … todo.sh kit de velocidad para la placa (+ subir_a_placa.ps1, traer_resultados.ps1)
 ```
 
@@ -244,7 +275,12 @@ Los cambios que más movieron la nota, en orden. Todas las pruebas, con su conju
 
 Reto de Qualcomm del Datathon FME 2026 (UPC).
 
-## Estado (15/11/2026, 09:30): modelo congelado
+## Estado final (15/11/2026, 12:30): placa lista para el examen
+
+- **En la placa:** el servicio `math-llm` del reto carga `sopa_z10-Q8_0.gguf` (md5 comprobado) y arranca solo al encenderla; el `predict.py` del equipo está en el repo del reto. Verificado con el reloj real (tabla de arriba).
+- **Teach:** la app Math Coach está instalada en la misma placa y usa el mismo modelo a través de un puente al contenedor de App Lab. Se para antes del examen con `arduino-app-cli app stop ~/ArduinoApps/math-coach`.
+
+### Estado a las 09:30: modelo congelado
 
 - **Modelo final:** `sopa_z10-Q8_0.gguf` (1,83 GB), la media de los pesos de **10 Qwen3-1.7B** entrenados con LoRA r32 sobre las mezclas v3, v4 y v4b, con varias semillas y ritmos de aprendizaje.
   - Examen de prueba: **69/100** a velocidad de placa (texto 64/80, figura 5/20).
