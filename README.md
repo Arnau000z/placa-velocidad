@@ -25,6 +25,29 @@ Proyecto del equipo para el **Datathon FME 2026, reto de Qualcomm «Math on the 
 > - **Project Hub write-up:** submitted on 15/11/2026 and waiting for Arduino's moderators; the full text, with screenshots, is here offline: [docs/project-hub-en.md](docs/project-hub-en.md).
 > - **Results and error analysis** by topic, language, level and cause: [below](#análisis-de-errores-tema-idioma-nivel-y-causa) and in [docs/06-resultados.md](docs/06-resultados.md). The rest of this README is in Spanish.
 
+## Entregables del reto
+
+| Entregable (Step 15 del reto) | Dónde | Estado |
+|---|---|---|
+| **Repositorio público en GitHub** | este repositorio: <https://github.com/Arnau000z/placa-velocidad> | ✅ público |
+| **Texto en Arduino Project Hub** | enviado el 15/11/2026: <https://projecthub.arduino.cc/projects/4cd45721-2a96-45e8-bc74-d6429d50f2ba/preview> | ⏳ **en revisión por los moderadores de Arduino**. Hasta que lo aprueben, ese enlace solo lo ve el equipo. Copia completa aquí: [docs/project-hub-en.md](docs/project-hub-en.md) |
+| **`predict.py` para el test oculto** | [`equipo/predict.py`](equipo/predict.py), instalado en la placa con [`instalar_en_placa.sh`](instalar_en_placa.sh) | ✅ verificado en la placa real |
+| **Demo en directo y pitch de 3 min** | [`demo.py`](demo.py) (Reason), la app [Math Coach](teach/README.md) (Teach) y el guion [docs/pitch.md](docs/pitch.md) | ✅ |
+
+**Lista del Step 15.1 (README del repositorio):**
+
+| Lo que pide | Dónde está |
+|---|---|
+| Código para una UNO Q nueva: `config.env` con repositorio, revisión, fichero y SHA256 de los modelos, servicios y la app de App Lab | [`config.env.equipo`](config.env.equipo) y [`teach/config.env`](teach/config.env) (modelo `sopa_z10`, SHA256 incluido), servicios en [`teach/board/systemd/`](teach/board/systemd/), app en [`teach/app/math-coach/`](teach/app/math-coach/) |
+| Qué hace el copiloto, con foto o vídeo | [Cómo responde el proyecto al reto](#cómo-responde-el-proyecto-al-reto), [Teach](#teach-math-coach-la-plataforma-de-clase-en-la-placa) y capturas en [`teach/docs/screenshots/`](teach/docs/screenshots/). **Pendiente: una foto o un vídeo de la placa con la matriz LED** |
+| Arquitectura: Linux, microcontrolador y M3Kang | [Arquitectura](#arquitectura) |
+| Cómo replicarlo paso a paso | [Montarlo en una placa nueva](#montarlo-en-una-placa-nueva), [Probar el sistema completo](#probar-el-sistema-completo-en-la-placa-3-pasos) y [teach/README.md](teach/README.md#how-to-replicate-it-step-by-step) |
+| Resultados frente a la línea base | [Experimentos frente a la línea base](#experimentos-frente-a-la-línea-base) y [`teach/docs/results/ablations.csv`](teach/docs/results/ablations.csv) |
+| Análisis de errores por tema, idioma y dificultad | [Análisis de errores](#análisis-de-errores-tema-idioma-nivel-y-causa) |
+| Lo que no funcionó | [Lo que no funcionó](#lo-que-no-funcionó) |
+| Equipo y licencia | [Equipo](#equipo), [MIT](LICENSE) |
+| Sin datos de M3Kang | [Datos y licencias](#datos-y-licencias): ni enunciados, ni imágenes, ni índices |
+
 ## Cómo responde el proyecto al reto
 
 El reto pide un copiloto que **haga las dos cosas** dentro de la placa: **Reason** (acertar el test oculto) y **Teach** (guiar al alumno sin darle la respuesta). Nuestra respuesta son dos piezas que comparten la misma placa y **el mismo modelo**: `sopa_z10` para razonar y **Math Coach** para enseñar.
@@ -135,21 +158,37 @@ flowchart LR
 flowchart TB
     subgraph Placa["Arduino UNO Q 4 GB · sin red"]
         subgraph Linux["Linux · Qualcomm QRB2210, 4× Cortex-A53"]
-            P["predict.py del equipo<br/>(solo biblioteca estándar)"]
-            S["llama-server · servicio math-llm<br/>sopa_z10-Q8_0.gguf, 1,83 GB"]
-            X["Subproceso Python<br/>ejecuta el programa del modelo<br/>(256 MB, límite de tiempo)"]
-            T["data/train.jsonl<br/>detector de repetidos"]
-            P <-->|"HTTP 127.0.0.1:8081<br/>letra y programa"| S
+            S["llama-server · servicio math-llm<br/>sopa_z10-Q8_0.gguf, 1,83 GB<br/>127.0.0.1:8081 · un solo modelo"]
+            subgraph Reason["Reason · el examen"]
+                P["predict.py del equipo<br/>(solo biblioteca estándar)"]
+                X["Subproceso Python<br/>ejecuta el programa del modelo<br/>(256 MB, límite de tiempo)"]
+                T["data/train.jsonl<br/>detector de repetidos"]
+            end
+            subgraph Teach["Teach · Math Coach, app de App Lab (contenedor)"]
+                W["Web del aula :7000<br/>alumnos y docente"]
+                C["coach.py<br/>escalera de pistas, entrenador<br/>adaptativo, lecciones, juegos"]
+                B["bank.json<br/>mapa de 810 problemas de M3Kang<br/>bge-m3, 24 familias"]
+            end
+            PB["llm_bridge.py<br/>172.17.0.1:8081 → 127.0.0.1:8081"]
+            P <-->|"letra y programa"| S
             P --> X
             P --> T
+            W --> C --> B
+            C -->|"pista 3"| PB --> S
         end
-        M["Microcontrolador STM32<br/>(no se usa)"]
+        subgraph MCU["Microcontrolador STM32"]
+            L["sketch.ino · matriz LED 8×13<br/>tick o cruz y nivel del alumno"]
+        end
+        C -->|"Bridge (RPC)"| L
     end
     J["examen.jsonl"] --> P --> R["respuestas.csv<br/>una letra por problema"]
+    M3["M3Kang"] -.->|"entrenamiento con programas verificados"| S
+    M3 -.->|"mapa, pista 1 y lecciones"| B
 ```
 
-- **Todo corre en la parte Linux.** El microcontrolador no interviene: el reto se puntúa con `predict.py` y el cuello de botella es la CPU.
-- **Un solo modelo en memoria:** el servicio oficial `math-llm`, con los ajustes del reto (contexto de 4.096 tokens, 4 hilos, `--reasoning off`). El servicio de embeddings sigue instalado, pero nuestro `predict.py` no lo usa.
+- **Linux hace el trabajo pesado:** el servicio oficial `math-llm` carga **un solo modelo**, `sopa_z10`, con los ajustes del reto (contexto de 4.096 tokens, 4 hilos, `--reasoning off`). Lo usan las dos partes: `predict.py` para el examen y Math Coach para la pista 3. El servicio de embeddings del reto sigue instalado, pero ninguna de las dos lo necesita en marcha: los vectores del mapa ya van dentro de `bank.json`.
+- **El microcontrolador** (STM32) solo lo usa Teach: Math Coach le manda por el *Bridge* de App Lab el tick o la cruz de cada respuesta y el nivel del alumno, y el sketch lo dibuja en la matriz LED. El examen no lo necesita.
+- **El contenedor de App Lab no ve `127.0.0.1` del sistema:** un puente mínimo ([`llm_bridge.py`](teach/app/math-coach/board/llm_bridge.py)) escucha solo en la interfaz de Docker y reenvía al modelo. Nada se expone a la Wi-Fi salvo la web del aula.
 - **Cómo usamos M3Kang:**
   1. **Como fábrica de entrenamiento.** Programas verificados por ejecución para sus problemas de texto, y problemas suyos como referencia de estilo para generar miles de problemas nuevos.
   2. **Como banco de repetidos.** El Canguro repite problemas entre niveles; si llega uno con las mismas opciones, se contesta en 2 ms.
@@ -224,6 +263,16 @@ Resumen; las tablas completas están en [docs/06-resultados.md](docs/06-resultad
 - **Por nivel:** la dificultad no crece de forma limpia. Los niveles altos tienen más problemas «calculables» (álgebra, teoría de números) que el programa resuelve bien; los bajos, más lógica y lectura literal.
 - **Por longitud:** enunciados de menos de 40 palabras, 61 %; de 40 a 80, 33 %.
 - **Por causa:** el 75 % de los fallos de texto son de **planteamiento** (olvidar una condición, contar pares dos veces, invertir una relación), no de cálculo ni de tiempo. Los problemas con figura fallan sobre todo porque el modelo no ve el dibujo.
+
+## Lo que no funcionó
+
+Más de la mitad del trabajo fue descartar ideas con datos; la lista completa, con sus cifras, está en [docs/07-lo-que-no-funciono.md](docs/07-lo-que-no-funciono.md). Lo principal:
+- **Pedir solo la letra** (0.8B, 1.7B o 2B): azar. Ni cambiando la pregunta, ni con logprobs, ni corrigiendo el sesgo por letra.
+- **RAG con problemas parecidos en el prompt:** del 21 % al 25 % con el 0.8B, pero cada ejemplo cuesta hasta 65 s de lectura en la placa. Lo usamos en Teach (pista 1), no en el examen.
+- **Modelos de 4B y 8B:** aciertan más sin límite, pero un 4B lee un enunciado en ~35 s y escribe a 1,2 tokens/s: no caben en 60 s (medido en la placa).
+- **Cuantizar a 4 bits:** pierde 5-7 puntos y la placa no va más rápida (su CPU no tiene `dotprod`).
+- **Entrenar con explicaciones en prosa:** −9 puntos; el modelo deja de escribir código.
+- **Pistas de método antes del programa, GRPO, dos programas por problema, razonar antes del código:** igual o peor con el reloj de la placa.
 
 ## Documentación
 
