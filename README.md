@@ -118,7 +118,7 @@ python3 predict.py --input examen.jsonl --output respuestas.csv
 El reto pide las dos cosas: **Reason** (el examen, todo lo de arriba) y **Teach**. La parte Teach es **Math Coach**, una app de App Lab que corre en la misma placa. Todo el detalle está en [`teach/README.md`](teach/README.md) y en [`teach/app/math-coach/README.md`](teach/app/math-coach/README.md), con capturas en [`teach/docs/screenshots/`](teach/docs/screenshots/).
 
 - **Para el alumno:** problemas del Canguro a su nivel, una **escalera de pistas que nunca da la respuesta** (1: un problema parecido más fácil ya resuelto; 2: el tema y el método; 3: una frase del modelo, que se descarta si revela la respuesta; 4: la solución, solo si la pide), tests, lecciones paso a paso y juegos en directo. La **matriz LED** muestra un tick o una cruz y el nivel.
-- **Para el docente: una IA que analiza la clase, calculada entera en la placa.** El docente entra con su PIN y ve el estado general de la clase y de cada alumno:
+- **Para el docente: una IA que analiza la clase, calculada entera en la placa y sin modelo de lenguaje** (teoría de respuesta al ítem, familias de embeddings, k-means, un modelo de tiempos de respuesta y reglas). El docente entra con su PIN y ve el estado general de la clase y de cada alumno:
   - **«Qué haría hoy»:** hasta 4 acciones concretas con su botón, y un informe que dice quién necesita ayuda, quién puede estar respondiendo al azar, qué errores conceptuales comparten varios alumnos y qué temas les cuestan más tiempo.
   - **Nivel real de cada alumno y dificultad real de cada problema** para esa clase (teoría de respuesta al ítem, ajustada con cada respuesta).
   - **Mapa de habilidades** alumnos × familias de problemas, **grupos de trabajo** sugeridos por la IA (k-means) e índice de riesgo explicable.
@@ -128,7 +128,11 @@ El reto pide las dos cosas: **Reason** (el examen, todo lo de arriba) y **Teach*
   - Las frases del informe y las alertas son plantillas y reglas transparentes sobre esos modelos: explican sin inventar, y cada alerta dice por qué.
   ![Resumen del docente](teach/docs/screenshots/06-teacher-summary.png)
 - **M3Kang como mapa:** 810 problemas con embeddings bge-m3 agrupados en 24 familias por significado; de ahí sale el problema parecido más fácil de la pista 1.
-- **Un solo modelo para todo:** la pista 3 la escribe **el mismo `sopa_z10` del examen**, a través del servicio `math-llm`. Un puente (`teach/app/math-coach/board/llm_bridge.py`) deja que el contenedor de App Lab llegue a `127.0.0.1:8081` sin exponer el modelo a la red. No se carga ningún modelo más: RAM libre con todo encendido, ~2,4 GB.
+- **Qué modelo se usa y cuándo** (análisis completo del código en [teach/docs/quan-s-utilitzen-els-models.md](teach/docs/quan-s-utilitzen-els-models.md), en catalán):
+  - **`sopa_z10`** solo escribe la **pista 3**. Se precarga con prioridad baja cuando el alumno pide la pista 1 y se guarda para todos los alumnos, así que muchas veces sale al instante. En la placa, cada pista nueva tarda unos 20 s, y un solo hilo las atiende en cola.
+  - **bge-m3** no corre en la placa: sus vectores (1024 dimensiones) se calcularon antes y van en `bank.json`. La app solo multiplica vectores para elegir el siguiente problema, la pista 1, el tema de la pista 2, las familias, los tests y el panel del docente.
+  - **bge-small** (servicio `math-embed` del reto) no lo usa ni la app ni `predict.py`.
+- **Un solo modelo de lenguaje para todo:** la pista 3 la escribe **el mismo `sopa_z10` del examen**, a través del servicio `math-llm`. Un puente (`teach/app/math-coach/board/llm_bridge.py`) deja que el contenedor de App Lab llegue a `127.0.0.1:8081` sin exponer el modelo a la red. No se carga ningún modelo más: RAM libre con todo encendido, ~2,4 GB.
 
 **Cómo convive con el examen (comprobado en la placa el 15/11):**
 ```bash

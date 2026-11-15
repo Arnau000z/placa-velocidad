@@ -44,12 +44,12 @@ The same board serves an App Lab app (port 7000) to the classroom's phones and l
 
 1. a similar, easier problem that is already solved, retrieved from a map of 810 M3Kang problems (bge-m3 embeddings grouped into 24 semantic families);
 2. the topic and the method;
-3. one sentence from the language model (the same `sopa_z10` as the exam), rejected by code if it reveals the answer;
+3. one sentence from the language model (the same `sopa_z10` as the exam), rejected by code if it reveals the answer; it is prefetched when the student asks for hint 1 and cached for the whole class, because a new hint takes about 20 s on the board;
 4. the solution, only if the student asks for it.
 
 Students simply **connect with their phones** to the board's web page to practise, take tests and play live class games, and the **LED matrix** reacts instantly with a tick or a cross and the student's level (checked on the board on 15/11), and the teacher gets a skills map of the class by topic and level. A small bridge lets the App Lab container reach the language model on 127.0.0.1 without exposing it to the network, so **a single model is loaded for everything** (about 2.4 GB of RAM still free).
 
-**For the teacher, an AI that reads the whole class, computed on the board.** With a PIN, the teacher sees the state of the class and of every student: "what I'd do today" (up to 4 actions with their button), who needs help, who may be guessing, misconceptions shared by several students, each student's real level and each problem's real difficulty for this class (item response theory updated with every answer), a skills map by problem family, AI working groups (k-means), pace profiles from response times, question analysis (which questions confuse strong students, what each wrong option attracts), live AI reliability and a printable report. Report sentences and alerts are templates and transparent rules over these models, so they explain without inventing.
+**For the teacher, an AI that reads the whole class, computed on the board without any language model** (item response theory, embedding families, k-means, a response-time model and rules). With a PIN, the teacher sees the state of the class and of every student: "what I'd do today" (up to 4 actions with their button), who needs help, who may be guessing, misconceptions shared by several students, each student's real level and each problem's real difficulty for this class (item response theory updated with every answer), a skills map by problem family, AI working groups (k-means), pace profiles from response times, question analysis (which questions confuse strong students, what each wrong option attracts), live AI reliability and a printable report. Report sentences and alerts are templates and transparent rules over these models, so they explain without inventing.
 
 ![Teacher's AI summary](../teach/docs/screenshots/06-teacher-summary.png)
 
