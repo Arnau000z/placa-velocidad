@@ -389,7 +389,7 @@ def imprime_constante(code):
     """¿La última línea del programa imprime un literal (no calcula)?"""
     lineas = [x.strip() for x in (code or "").splitlines() if x.strip()]
     return bool(lineas) and bool(_CONSTANTE.fullmatch(lineas[-1]))
-REINTENTOS = int(os.environ.get("REINTENTOS", "2"))
+REINTENTOS = int(os.environ.get("REINTENTOS", "0"))  # regla 11.1 del reto: temperatura 0 y semilla fija; los reintentos iban a T=0,7 (con z10: 185 → 185)
 RESERVA_TEXTO = os.environ.get("RESERVA_TEXTO", "E")  # letra de reserva si las opciones no son 5 números distintos; "modelo" = la del modelo
 PISTAS = {}  # experimento: PISTAS=<jsonl con {id, pista}> → "Hint: ..." tras las opciones (apagado si no se da)
 try:
