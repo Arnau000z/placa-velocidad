@@ -49,6 +49,10 @@ The same board serves an App Lab app (port 7000) to the classroom's phones and l
 
 Students simply **connect with their phones** to the board's web page to practise, take tests and play live class games, and the **LED matrix** reacts instantly with a tick or a cross and the student's level (checked on the board on 15/11), and the teacher gets a skills map of the class by topic and level. A small bridge lets the App Lab container reach the language model on 127.0.0.1 without exposing it to the network, so **a single model is loaded for everything** (about 2.4 GB of RAM still free).
 
+**For the teacher, an AI that reads the whole class, computed on the board.** With a PIN, the teacher sees the state of the class and of every student: "what I'd do today" (up to 4 actions with their button), who needs help, who may be guessing, misconceptions shared by several students, each student's real level and each problem's real difficulty for this class (item response theory updated with every answer), a skills map by problem family, AI working groups (k-means), pace profiles from response times, question analysis (which questions confuse strong students, what each wrong option attracts), live AI reliability and a printable report. Report sentences and alerts are templates and transparent rules over these models, so they explain without inventing.
+
+![Teacher's AI summary](../teach/docs/screenshots/06-teacher-summary.png)
+
 | Teaching check | Result |
 |---|---|
 | Hint 3 never gives the answer away (725 validation problems, 3 languages) | 6.3% of first attempts leaked it; **none reaches a student** after the checks |
