@@ -1,4 +1,4 @@
-"""Campaña de fine-tuning del Datathon en una máquina de vast.ai (adaptado de modelo-coe-ia/nube/nube.py).
+"""Campaña de fine-tuning del Datathon en una máquina de vast.ai.
 
 python nube.py ofertas                 # mejores gráficas de 80 GB o más ahora mismo (no alquila)
 python nube.py alquilar [id_oferta]    # alquila una (la mejor calidad/precio si no se da id)
