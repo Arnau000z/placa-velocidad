@@ -92,6 +92,8 @@ Así que no hay que hacer nada especial: basta con lanzar `predict.py` una sola 
 
 La red no hace falta: con el Wi-Fi apagado funciona igual.
 
+**Si usas Claude Code u otro asistente de IA** con este repositorio, lee primero [`CLAUDE.md`](CLAUDE.md) (copia en [`AGENTS.md`](AGENTS.md)): tiene estos pasos como reglas para que el asistente ejecute el examen siempre de la mejor forma.
+
 ## Probar el sistema completo en la placa (3 pasos)
 
 Hace falta la placa con el repo del reto ya montado (pasos 0-10 de su README) y conectada por USB-C al PC.
