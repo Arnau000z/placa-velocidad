@@ -34,7 +34,7 @@ def as_text(rows: list[dict], tokenizer) -> list[dict]:
     bos = tokenizer.bos_token or ""
     adds_bos = bool(bos) and tokenizer("x")["input_ids"][:1] == [tokenizer.bos_token_id]
     out = []
-    # enable_thinking=False: lo mismo que pide el sistema a vLLM (COE_OPENAI_EXTRA), para que el prompt del entreno
+    # enable_thinking=False: lo mismo que pide el sistema a vLLM, para que el prompt del entreno
     # sea byte a byte el que verá la Gemma al usarla (03/11/2026). Las plantillas que no lo usan lo ignoran.
     for row in rows:
         prompt = tokenizer.apply_chat_template(row["prompt"], tokenize=False, add_generation_prompt=True,
