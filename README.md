@@ -19,6 +19,47 @@ Proyecto del equipo para el **Datathon FME 2026, reto de Qualcomm «Math on the 
 
 *Simulado con el reloj de la placa (4,6 / 2,7 tokens/s medidos), con el mismo `predict.py` y el mismo GGUF que van a la placa.*
 
+## Probar el sistema completo en la placa (3 pasos)
+
+Hace falta la placa con el repo del reto ya montado (pasos 0-10 de su README) y conectada por USB-C al PC.
+
+**1. En el PC:** copia este kit, nuestro `predict.py` y el modelo final (1,83 GB, unos minutos por USB):
+```powershell
+cd D:\Datathon_A\placa-velocidad
+.\subir_a_placa.ps1 -Extra D:\Datathon_A\modelos_entrenados\sopa_z10-Q8_0.gguf
+```
+
+**2. En la placa:** instala el sistema y lo prueba con 6 problemas y el reloj de verdad:
+```bash
+cd ~/placa-velocidad && ./instalar_en_placa.sh
+```
+Hace cuatro cosas:
+- Comprueba el md5 del modelo.
+- Pone `LLM_FILE=sopa_z10-Q8_0.gguf` en el `config.env` del reto.
+- Reinstala los servicios con el script oficial `board/04_install_services.sh` (pide `sudo`).
+- Copia nuestro `predict.py` al repo del reto; el original queda como `predict_oficial.py`.
+
+Al acabar enseña una tabla con cada problema: respuesta, si acierta, segundos y vía. Termina en **«BIEN: ningún problema pasa de 60 s»** u **«OJO»**.
+
+**3. Así lo ejecutará el jurado** (es lo que acaba de probar el paso 2):
+```bash
+cd ~/datathon-UPC-maths-qualcomm-arduino-unoq
+python3 predict.py --input examen.jsonl --output respuestas.csv
+```
+
+| Otros usos | |
+|---|---|
+| `N=20 ./instalar_en_placa.sh --probar` | Solo la prueba, con 20 problemas, sin tocar nada |
+| `./instalar_en_placa.sh --deshacer` | Vuelve al modelo y al `predict.py` del reto |
+| `PRINCIPAL=sopa_z10-Q8_0.gguf ./todo.sh rapido` | Medida completa (velocidad, memoria, calor y cadena), unos 15 min |
+| `.\traer_resultados.ps1` (en el PC) | Trae los resultados de la placa |
+
+| Modelo final | |
+|---|---|
+| Fichero | `sopa_z10-Q8_0.gguf`, 1.834.426.208 bytes, md5 `c1ba1d47e8f818378e27be6a7c1a01b2` |
+| Qué es | La media de los pesos de 10 Qwen3-1.7B entrenados con LoRA r32 (mezclas v3, v4 y v4b), exportada a GGUF Q8_0 |
+| Dónde está | `D:\Datathon_A\modelos_entrenados\` en la torre y como adjunto de la *release* `modelo-final` de este repositorio |
+
 ![Del azar al 57 %](figuras/progreso.png)
 
 ## Cómo funciona, en 30 segundos

@@ -6,6 +6,8 @@ Con esos datos se decide el modelo, la cuantización y el presupuesto de tokens 
 
 ## Uso
 
+Para instalar el sistema completo y probarlo con el servicio real, ver [Probar el sistema completo](../README.md#probar-el-sistema-completo-en-la-placa-3-pasos). Lo de abajo es la medida de velocidad.
+
 **1. Llevar el repo a la placa** (desde el PC, con la placa por USB-C):
 
 ```powershell

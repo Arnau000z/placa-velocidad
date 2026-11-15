@@ -68,3 +68,16 @@ Salida: `id,language,answer,seconds,status`, con `status` igual a la vía (`dupl
 ## Cómo se simula la placa desde el PC
 
 Medir en la placa cuesta 60 s por problema. Para comparar decenas de modelos, [`codigo/entrega/sim_demo.py`](../codigo/entrega/sim_demo.py) ejecuta el mismo `predict.py` en la torre con `--tps-forzado 4.6,2.7`: el modelo responde a la velocidad de la gráfica, pero el reloj se descuenta como si leyera y escribiera a la velocidad de la placa, contando la caché del prefijo. [`auto_sim.py`](../codigo/entrega/auto_sim.py) espera a que cada candidato termine de entrenar en la nube, baja su GGUF (en trozos de 200 MB con md5) y le pasa la simulación sobre el examen de prueba y sobre val.
+
+## Despliegue en la placa
+
+El sistema entero son dos piezas sobre el montaje oficial del reto:
+
+| Pieza | Dónde | Cómo se pone |
+|---|---|---|
+| Modelo `sopa_z10-Q8_0.gguf` | `~/models/` | `LLM_FILE=sopa_z10-Q8_0.gguf` en el `config.env` del reto y `board/04_install_services.sh`, que regenera y reinicia `math-llm` con los ajustes oficiales (`--ctx-size 4096 --parallel 1 --cache-ram 0 --ctx-checkpoints 2 --jinja --reasoning off`) |
+| `predict.py` del equipo | raíz del repo del reto | sustituye al `predict.py` oficial; lee el puerto de `config.env` (8081) y `data/train.jsonl` para el detector de repetidos |
+
+[`instalar_en_placa.sh`](../instalar_en_placa.sh) hace las dos cosas, guarda los originales (`config.env.orig`, `predict_oficial.py`) y prueba N problemas por el servicio real, igual que lo ejecutará el jurado. `--deshacer` lo devuelve todo como estaba.
+
+El servicio de embeddings (`math-embed`, bge-small) sigue arrancado porque el script oficial lo instala, pero nuestro `predict.py` no lo usa.
