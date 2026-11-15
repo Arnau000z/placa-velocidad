@@ -25,6 +25,11 @@ SERVER = r"D:\Datathon_A\herramientas\llama-win-b12308\cuda\llama-server.exe"
 PY = sys.executable
 pendientes = [a.split(":", 1) for a in sys.argv[1:]]
 hechos = set()
+try:  # los ya simulados (en val_sims.txt) no se repiten al relanzar
+    _vistos = open(HERE / "val_sims.txt", encoding="utf-8").read()
+    hechos = {n for _, n in pendientes if f" val_{n} reserva=" in _vistos}
+except OSError:
+    pass
 
 
 def log(msg):
@@ -108,7 +113,14 @@ def simular(dst, nombre):
         srv.wait()
 
 
-while len(hechos) < len(pendientes):
+LISTA = HERE / "candidatos_lista.txt"  # una línea «maq:nombre» por candidato; se relee en cada vuelta
+while True:
+    try:
+        for l in open(LISTA, encoding="utf-8"):
+            if ":" in l and not l.startswith("#") and l.strip().split(":", 1) not in pendientes:
+                pendientes.append(l.strip().split(":", 1))
+    except OSError:
+        pass
     for maq, nombre in pendientes:
         if nombre in hechos:
             continue

@@ -1,4 +1,4 @@
-"""Campaña de fine-tuning del Datathon en una máquina de vast.ai .
+"""Campaña de fine-tuning del Datathon en una máquina de vast.ai (adaptado de modelo-coe-ia/nube/nube.py).
 
 python nube.py ofertas                 # mejores gráficas de 80 GB o más ahora mismo (no alquila)
 python nube.py alquilar [id_oferta]    # alquila una (la mejor calidad/precio si no se da id)
@@ -92,7 +92,7 @@ def bundle() -> Path:
     def keep(t):
         name = t.name.replace("\\", "/")
         if any(x in name for x in ("/.git/", "__pycache__", "/data/images", "/results/", "_ocr.jsonl", "/resultados/python_",
-                                   "/resultados/ragexpl_", "/lotes/", "/lotes2/", "/lotes3/")):
+                                   "/resultados/ragexpl_", "/lotes/", "/lotes2/", "/lotes3/", "nube/salidas", "nube/nube_res", ".gguf", ".safetensors")):
             return None
         return t
 

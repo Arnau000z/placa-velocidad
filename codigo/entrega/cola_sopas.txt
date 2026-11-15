@@ -1,0 +1,28 @@
+sopa4_v2 1 17b_lora32_v2 17b_v2_lr2e4 17b_v2_2ep 17b_lora32
+sopa2_x13 1.3 17b_lora32_v2 17b_v2_lr2e4
+sopa5_v2 1 17b_lora32_v2 17b_v2_lr2e4 17b_v2_2ep 17b_v2_r32_4ep 17b_lora32
+sopa3_v2_4ep 1 17b_lora32_v2 17b_v2_lr2e4 17b_v2_r32_4ep
+sopa_v2v3 1 17b_lora32_v2 17b_v2_lr2e4 17b_v3 17b_v3_2ep
+sopa_v3 1 17b_v3 17b_v3_2ep
+sopa_v2v3_5 1 17b_lora32_v2 17b_v2_lr2e4 17b_v2_2ep 17b_v3 17b_v3_2ep
+sopa_v3_3 1 17b_v3 17b_v3_2ep 17b_v3_lr5e5
+sopa_v3v2b 1 17b_v3 17b_v3_2ep 17b_v2_2ep 17b_lora32_v2
+sopa_v234 1 17b_v3 17b_v3_2ep 17b_v2_2ep 17b_lora32_v2 17b_v4c
+sopa_v34 1 17b_v3 17b_v3_2ep 17b_v4c
+sopa_v4fam 1 17b_v4c 17b_v4b_2ep 17b_v4b_lr2e4
+sopa_mix6 1 17b_v3 17b_v3_2ep 17b_v2_2ep 17b_lora32_v2 17b_v4c 17b_v4b_2ep
+sopa_v34b 1 17b_v3 17b_v3_2ep 17b_v4c 17b_v4b_2ep
+sopa_v34x 1 17b_v3 17b_v3_2ep 17b_v4c 17b_v4b
+sopa_v34y 1 17b_v3 17b_v3_2ep 17b_v4c 17b_v4c_lr2e4
+sopa_v34z 1 17b_v3 17b_v3_2ep 17b_v4c 17b_v4b_2ep 17b_v4b
+sopa_v334 1 17b_v3 17b_v3_2ep 17b_v3_lr2e4 17b_v4c
+sopa_v334b 1 17b_v3 17b_v3_2ep 17b_v3_lr2e4 17b_v4c 17b_v4b_2ep
+sopa_z6a 1 17b_v3 17b_v3_2ep 17b_v4c 17b_v4b_2ep 17b_v4b 17b_v4c_2ep_s7
+sopa_z7 1 17b_v3 17b_v3_2ep 17b_v3_lr2e4 17b_v4c 17b_v4b_2ep 17b_v4b 17b_v4c_2ep_s7
+sopa_z8 1 17b_v3 17b_v3_2ep 17b_v3_lr2e4 17b_v3_r64 17b_v4c 17b_v4b_2ep 17b_v4b 17b_v4c_2ep_s7
+sopa_z10 1 17b_v3 17b_v3_2ep 17b_v3_lr2e4 17b_v4c 17b_v4b_2ep 17b_v4b 17b_v4c_2ep_s7 17b_v3_s7 17b_v3_s11 17b_v4b_s7
+sopa_z11 1 17b_v3 17b_v3_2ep 17b_v3_lr2e4 17b_v3_r64 17b_v4c 17b_v4b_2ep 17b_v4b 17b_v4c_2ep_s7 17b_v3_s7 17b_v3_s11 17b_v4b_s7
+sopa_z9 1 17b_v3 17b_v3_lr2e4 17b_v4c 17b_v4b_2ep 17b_v4b 17b_v4c_2ep_s7 17b_v3_s7 17b_v3_s11 17b_v4b_s7
+sopa_z11b 1 17b_v3 17b_v3_2ep 17b_v3_lr2e4 17b_v3_r16 17b_v4c 17b_v4b_2ep 17b_v4b 17b_v4c_2ep_s7 17b_v3_s7 17b_v3_s11 17b_v4b_s7
+sopa_z10w 1 17b_v3 17b_v3_2ep 17b_v3_lr2e4 17b_v4c 17b_v4b_2ep 17b_v4b 17b_v4c_2ep_s7 17b_v3_s7 17b_v3_s11 17b_v4b_s7 17b_v3 17b_v4c 17b_v4b_2ep
+sopa_z12 1 17b_v3 17b_v3_2ep 17b_v3_lr2e4 17b_v4c 17b_v4b_2ep 17b_v4b 17b_v4c_2ep_s7 17b_v3_s7 17b_v3_s11 17b_v4b_s7 17b_v4c_lr2e4 17b_v4b_lr2e4
