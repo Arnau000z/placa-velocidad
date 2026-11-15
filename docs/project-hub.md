@@ -114,7 +114,7 @@ Examen de prueba de la organización (50 problemas en inglés y catalán), con e
 
 **Análisis de errores:**
 - **Por tema** (Qwen3-1.7B, problemas de texto de val): probabilidad 71 %, aritmética 52 %, teoría de números 49 %, conteo 47 %, álgebra 44 %, geometría 42 %, medida 38 %, lógica 27 %.
-- **Por idioma** (modelo final): en el examen de prueba, inglés 76 % y catalán 62 %; en val, 51 % y 45 %. El catalán sigue por detrás, aunque la diferencia se redujo con problemas generados directamente en catalán.
+- **Por idioma** (modelo final): en el examen de prueba, inglés 76 % y catalán 62 %; en val, 51 % y 45 %. El catalán sigue por detrás: 14 puntos en el examen de prueba y 6 en val.
 - **Por longitud:** enunciados de menos de 40 palabras, 61 %; de 40 a 80, 33 %.
 - **Por causa:** el 75 % de los fallos son de **planteamiento** (olvidar una condición, contar pares dos veces, invertir una relación), no de cálculo ni de tiempo. Con el doble de tiempo solo se recupera 1 de 16 fallos.
 

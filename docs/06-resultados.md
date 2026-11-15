@@ -170,10 +170,12 @@ Por longitud del enunciado: **menos de 40 palabras, 61 %**; entre 40 y 80, 33 %;
 |---|---|---|---|
 | Baseline (0.8B, letra, 789) | 22,1 % | 23,8 % | 18,1 % |
 | 1.7B, rejilla base (349 de texto) | 46 % | 40 % | 43 % |
-| Líder, demo (simulación de placa) | **60 %** | **54 %** | — |
-| Líder, val texto (simulación de placa) | **42,3 %** | **33,3 %** | — |
+| Líder de la madrugada (`17b_lora32_v2`), demo | **60 %** | **54 %** | — |
+| Líder de la madrugada (`17b_lora32_v2`), val texto | **42,3 %** | **33,3 %** | — |
+| **Modelo final `sopa_z10`, demo** | **76 %** | **62 %** | — |
+| **Modelo final `sopa_z10`, val texto** | **51 %** | **45 %** | — |
 
-Con el líder de la madrugada, en catalán se perdían **6-9 puntos**; con el modelo final, 6-14 en la demo y 6 en val. Por eso la generación masiva lleva un 40 % de problemas en catalán y un foco solo en catalán.
+En catalán se pierden puntos con todos los modelos. Con el líder de la madrugada eran 6 en la demo y 9 en val. Por eso la generación masiva lleva un 40 % de problemas en catalán y un foco solo en catalán. Con el modelo final la distancia en val baja a 6 puntos, pero en la demo sube a 14.
 
 ### Por nivel (líder, simulación de placa)
 
