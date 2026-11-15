@@ -10,6 +10,8 @@ Listo para copiar en projecthub.arduino.cc → *New project*. Cada sección de a
 
 **Etiquetas:** UNO Q, LLM, llama.cpp, edge AI, education, math
 
+**Equipo:** Arnau, Carla, Biel y Júlia
+
 ---
 
 ## 1. Introducción

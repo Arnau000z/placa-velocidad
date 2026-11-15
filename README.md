@@ -198,7 +198,10 @@ Con `--seguido` no espera a Enter entre problemas. El guion del pitch está en [
 
 ## Equipo
 
-- *(nombres por completar)*
+- Arnau
+- Carla
+- Biel
+- Júlia
 
 Reto de Qualcomm del Datathon FME 2026 (UPC).
 
