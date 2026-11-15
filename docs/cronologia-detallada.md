@@ -646,3 +646,7 @@ Notas: «LLM grande de API» agrupa todos los modelos grandes de API usados para
   | **v3 + v3_2ep + v4c (la v4 limpia)** | **69** | **108** | **177** |
 
   Los v3 sueltos bajaban en val (escribían el triple de programas `print(constante)`, que solo aciertan el 31 % de las veces que casan), pero en sopa suben. Con la v4 limpia, en la sopa líder los programas que casan aciertan 58 de 65 en la demo. `predict.py` añade dos cambios: rechazar el programa que imprime una constante (pide otro) y probar el programa también en los problemas con figura.
+- **07:40-09:15** Sopas más grandes con los modelos de la v4b y nuevas semillas: `sopa_v34z` (5 modelos) suma 180; `sopa_z7` (7) suma 183; **`sopa_z10` (10) suma 185, con demo 70/100 (texto 64/80, figura 6/20) y val 115/242.** Las variantes con 9 u 11 modelos quedan por debajo (178-179).
+- **08:15** El disco D de la torre se llena (0 bytes libres) con las carpetas intermedias de las sopas. Se borran (quedan 65 GB) y cada sopa limpia lo suyo al acabar. Los GGUF quedan intactos.
+- **08:58** Se acaba el saldo de vast.ai y las seis máquinas se paran. Se pierden cinco entrenamientos a medias, que de todas formas no llegaban a la congelación. Los 14 adaptadores buenos ya estaban en la torre.
+- **09:30** **Congelación:** `sopa_z10-Q8_0.gguf` y el `predict.py` de las 08:10. Queda medir en la placa y entregar a partir de las 12:00.

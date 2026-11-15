@@ -4,7 +4,7 @@
 ![CPU](https://img.shields.io/badge/CPU-4%C3%97%20Cortex--A53-555)
 ![Modelo](https://img.shields.io/badge/modelo-Qwen3--1.7B%20%2B%20LoRA%20r32-6250d6)
 ![Motor](https://img.shields.io/badge/llama.cpp-2cbe0ec-2a78d6)
-![Examen de prueba](https://img.shields.io/badge/examen%20de%20prueba-69%20%25%20(baseline%2021%20%25)-1baf7a)
+![Examen de prueba](https://img.shields.io/badge/examen%20de%20prueba-70%20%25%20(baseline%2021%20%25)-1baf7a)
 
 Proyecto del equipo para el **Datathon FME 2026, reto de Qualcomm «Math on the Edge»**: resolver problemas del Canguro matemático (opción múltiple A-E, en inglés y catalán) con un modelo de lenguaje que corre **entero dentro de una Arduino UNO Q**. Sin red y con 60 segundos por problema, en una CPU que lee unos 4,6 tokens por segundo.
 
@@ -14,7 +14,8 @@ Proyecto del equipo para el **Datathon FME 2026, reto de Qualcomm «Math on the 
 | Baseline del reto (Qwen3.5-0.8B, letra directa) | ~21 % |
 | Qwen3-1.7B sin entrenar, con nuestro `predict.py` | 37 % |
 | Qwen3-1.7B + LoRA entrenado con 9.603 programas verificados | 57 % |
-| **Media de pesos de tres 1.7B entrenados con las mezclas v3 y v4 (17.904 programas)** | **69 %** |
+| Media de pesos de tres 1.7B entrenados con las mezclas v3 y v4 | 69 % |
+| **Modelo final: media de pesos de diez 1.7B entrenados con las mezclas v3, v4 y v4b** | **70 %** |
 
 *Simulado con el reloj de la placa (4,6 / 2,7 tokens/s medidos), con el mismo `predict.py` y el mismo GGUF que van a la placa.*
 
@@ -101,17 +102,11 @@ flowchart LR
 
 M3Kang tiene licencia **solo para investigación**. Este repositorio **no incluye ningún enunciado, imagen ni índice de M3Kang**, solo identificadores de problema y resultados agregados. Los datos de entrenamiento y los modelos entrenados se quedan fuera del repositorio.
 
-## Estado (15/11/2026, 07:40)
+## Estado (15/11/2026, 09:30): modelo congelado
 
-- **Modelo líder:** `sopa_v34`, la media de los pesos de tres 1.7B entrenados con las mezclas v3 y v4.
-  - Examen de prueba: **69/100** a velocidad de placa, con 65 de 80 en los problemas de texto.
-  - Val en inglés y catalán, sin repetidos: 108/242.
-  - Cuando el programa casa con una opción, acierta 58 de 65.
-- **Cómo se llegó:**
-  - Los modelos sueltos se quedaban en 51-60/100.
-  - Promediar sus pesos («sopa de modelos») suma más que cualquiera de ellos.
-  - La mezcla v4 (17.904 ejemplos, con una generación masiva dirigida a los errores y sin programas que imprimen una constante) mejora la sopa.
-- **En marcha:**
-  - Los modelos de la v4b (19.984 ejemplos).
-  - Sopas más grandes.
-- **Siguiente:** medir el elegido en la placa con el kit, congelar la versión y entregar.
+- **Modelo final:** `sopa_z10-Q8_0.gguf` (1,83 GB), la media de los pesos de **10 Qwen3-1.7B** entrenados con LoRA r32 sobre las mezclas v3, v4 y v4b, con varias semillas y ritmos de aprendizaje.
+  - Examen de prueba: **70/100** a velocidad de placa (texto 64/80, figura 6/20).
+  - Val en inglés y catalán, sin repetidos: 115/242 (48 %).
+  - Simulado a 4,6 / 2,7 tokens/s: 39-43 s por problema de media y 52-58 s como máximo.
+- **`predict.py`:** el de `equipo/`, sin cambios desde las 08:10.
+- **Lo último que queda:** comprobar en la placa que ningún problema pasa de 60 s, incluido el primero, que se lee en frío, y entregar a partir de las 12:00.
