@@ -23,6 +23,7 @@ Proyecto del equipo para el **Datathon FME 2026, reto de Qualcomm «Math on the 
 > - **Reason:** a Qwen3-1.7B fine-tuned with LoRA (an average of 10 runs, `sopa_z10`, GGUF Q8_0) does not reason in prose: it writes a short Python program that the board runs and matches against the five options. 69% on the organisers' practice exam with the board's clock (baseline 21%), 22/26 verified on the real board, every problem under 60 s. Entry point: [`equipo/predict.py`](equipo/predict.py); installer: [`instalar_en_placa.sh`](instalar_en_placa.sh); model: the [`modelo-final` release](https://github.com/Arnau000z/placa-velocidad/releases).
 > - **Teach:** [Math Coach](teach/README.md), an App Lab app served by the board to the classroom (port 7000): Kangaroo problems at each student's level, a hint ladder that never gives the answer away (similar easier solved problem from an M3Kang map, then topic and method, then one sentence from the same model, filtered by code), tests, lessons, live games, a teacher's skills map, and a tick/cross and the level on the LED matrix.
 > - **Project Hub write-up:** submitted on 15/11/2026 and waiting for Arduino's moderators; the full text, with screenshots, is here offline: [docs/project-hub-en.md](docs/project-hub-en.md).
+> - **Getting the best result:** `predict.py` warms the model up by itself before the first problem (the first, cold read of the system prompt takes 71-78 s and is not counted). Boot the board 2 minutes earlier, stop Math Coach and anything else using the model, keep the official service settings and the Q8_0 model, and run the whole exam in one go: [checklist](#antes-de-ejecutar-el-examen-calentamiento-y-cómo-sacar-el-mejor-resultado).
 > - **Results and error analysis** by topic, language, level and cause: [below](#análisis-de-errores-tema-idioma-nivel-y-causa) and in [docs/06-resultados.md](docs/06-resultados.md). The rest of this README is in Spanish.
 
 ## Entregables del reto
@@ -69,6 +70,27 @@ El reto pide un copiloto que **haga las dos cosas** dentro de la placa: **Reason
 4. **El catalán:** 14 puntos por detrás en el examen de prueba. → Datos de entrenamiento dirigidos al catalán: la distancia en val baja a 6 puntos.
 5. **Las figuras:** el modelo no las ve. → Letra de reserva; son el 20 % del examen y el límite honesto del sistema.
 6. **Las reglas del reto:** temperatura 0 y semilla fija. → Sin reintentos aleatorios: el mismo examen da siempre las mismas respuestas.
+
+## Antes de ejecutar el examen: calentamiento y cómo sacar el mejor resultado
+
+**Por qué importa el calentamiento.** La primera vez que el modelo lee el prompt de sistema tarda **71-78 s**, más que el límite de 60 s por problema. Después queda en la caché del servidor, y cada problema solo lee sus ~70 tokens nuevos (15-20 s). **`predict.py` lo hace solo**, antes del primer problema:
+1. Espera a que el servidor responda `/health`, hasta 5 min, por si la placa acaba de arrancar y el modelo aún se está cargando.
+2. Lanza una petición de calentamiento (hasta 4 min) que deja el prompt de sistema en la caché. **Ese tiempo no cuenta para ningún problema**, y por eso el primer problema ya va en caliente.
+
+Así que no hay que hacer nada especial: basta con lanzar `predict.py` una sola vez con todo el examen. Para sacar el mejor resultado posible:
+
+| # | Qué hacer | Por qué |
+|---|---|---|
+| 1 | **Encender la placa al menos 2 minutos antes** y comprobar que el modelo responde: `systemctl is-active math-llm` y `curl -s 127.0.0.1:8081/health` (debe decir `{"status":"ok"}`) | El modelo tarda ~20 s en cargarse tras arrancar |
+| 2 | **Parar todo lo que use el modelo o la CPU:** `arduino-app-cli app stop ~/ArduinoApps/math-coach`, y no lanzar otro `predict.py` o `eval.py` a la vez | El servidor atiende **una petición cada vez** (`--parallel 1`): una pista de Math Coach durante el examen retrasaría un problema y podría hacer que pase de 60 s |
+| 3 | *(Opcional, recomendado)* **Calentar antes con los 5 problemas de ejemplo:** `python3 predict.py --input data/sample_problems.jsonl --output results/calentar.csv` (~2 min; deben salir C, B, C, C, B) | Comprueba que todo funciona y deja el modelo cargado en memoria antes del examen de verdad |
+| 4 | **Ejecutar el examen de una vez:** `python3 predict.py --input examen.jsonl --output respuestas.csv` desde `~/datathon-UPC-maths-qualcomm-arduino-unoq` | El calentamiento se hace una sola vez por ejecución; partir el examen en trozos lo repetiría |
+| 5 | **No cambiar los parámetros del servicio** (contexto 4.096, 4 hilos, `--parallel 1`, `--cache-ram 0`, `--ctx-checkpoints 2`) ni el modelo **Q8_0** | El presupuesto de tiempo de `predict.py` está medido con ellos; en esta CPU, los modelos de 4 bits no van más rápido y aciertan menos |
+| 6 | **Entrada en JSONL con las opciones en texto** (formato de `data/sample_problems.jsonl`). Si llega el parquet con imágenes, convertirlo antes en un PC con `prepare_m3kang.py` (OCR) | Sin opciones en texto, el programa no tiene con qué casar su resultado y solo queda la letra de reserva |
+| 7 | **Placa ventilada y alimentación estable** | Medido: 73 °C de máximo, sin bajar de frecuencia; un corte de luz a mitad obliga a empezar de nuevo |
+| 8 | **Revisar el CSV al acabar:** una letra por problema y todos los `seconds` por debajo de 60 | En nuestras pruebas, máximo 53,8 s |
+
+La red no hace falta: con el Wi-Fi apagado funciona igual.
 
 ## Probar el sistema completo en la placa (3 pasos)
 

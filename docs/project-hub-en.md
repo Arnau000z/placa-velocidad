@@ -90,6 +90,13 @@ cd ~/datathon-UPC-maths-qualcomm-arduino-unoq
 python3 predict.py --input exam.jsonl --output answers.csv
 ```
 
+**Getting the best result.** The first, cold read of the system prompt takes 71-78 s, more than the limit; after that it stays in the server's cache and each problem only reads its ~70 new tokens. `predict.py` handles this by itself: before the first problem it waits for the server's `/health` (up to 5 min) and sends a warm-up request (up to 4 min) that is not counted for any problem. To get the best score:
+1. Boot the board at least 2 minutes before and check `curl -s 127.0.0.1:8081/health`.
+2. Stop Math Coach and anything else that uses the model: the server answers one request at a time.
+3. Optionally warm up with `data/sample_problems.jsonl` (about 2 minutes; expected answers C, B, C, C, B).
+4. Run the whole exam in one go, keep the official service settings and the Q8_0 model (4-bit is not faster on this CPU and is less accurate).
+5. Check the CSV: one letter per problem and every `seconds` value under 60.
+
 For the Teach app: `bash teach/app/math-coach/deploy/install_on_board.sh` on the board, then open `http://<board-ip>:7000` from the same Wi-Fi. Before the exam, stop it (`arduino-app-cli app stop ~/ArduinoApps/math-coach`) so no hint competes with `predict.py` for the model.
 
 ## Results
