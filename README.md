@@ -134,6 +134,27 @@ Pasa por el `predict.py` y el servicio reales 6 problemas inventados por el equi
 
 Con `--seguido` no espera a Enter entre problemas. El guion del pitch está en [docs/pitch.md](docs/pitch.md).
 
+## Experimentos frente a la línea base
+
+Los cambios que más movieron la nota, en orden. Todas las pruebas, con su conjunto y su ruido, están en [Resultados](docs/06-resultados.md); los registros en CSV, en [`pruebas/`](pruebas).
+
+| # | Cambio | Medido en | Resultado |
+|---|---|---|---|
+| 0 | **Línea base del reto:** Qwen3.5-0.8B, letra directa | val (789) | 21,0 % (contestar siempre D: 22,7 %) |
+| 1 | Cinco formas distintas de pedir la letra | val (789) | 17-21,8 %: sin efecto |
+| 2 | RAG con 2 ejemplos parecidos (bge-m3) | val (789) | 25,3 % |
+| 3 | Qwen3.5-2B razonando en ≤ 60 palabras | muestra (200) | 34,5 % |
+| 4 | **Programa en Python** con código verificado de 2 problemas parecidos | T100 | 41 % (texto 50 %) |
+| 5 | Qwen3-1.7B con el sistema completo | val (789) | 35,5 % (texto 46 %) |
+| 6 | Casar el valor en vez de pedir la letra | val texto (349) | +5,7 puntos |
+| 7 | **Con el reloj de la placa:** programa corto → mediana | demo (100) | 45 % (sin reloj, 58 %) |
+| 8 | Ajuste fino con explicaciones en prosa | val texto (349) | −9 puntos (descartado) |
+| 9 | `predict.py` final, 1.7B sin entrenar, reloj de placa | demo (100) | 37 % |
+| 10 | + LoRA con 516 programas propios verificados | demo, cadena de placa | 47-50 % (antes 39-41 %) |
+| 11 | + LoRA r32 con ~10.000 programas verificados | demo (100) | 51 % → 57 % |
+| 12 | + Media de pesos de varios LoRA («sopa») | demo (100) | 60 % → 69 % |
+| 13 | **Modelo final** `sopa_z10`, temperatura 0 | demo (100) · val texto (242) | **69 %** · **116/242 (48 %)** |
+
 ## Documentación
 
 | | |
