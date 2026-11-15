@@ -19,7 +19,7 @@ report, and backs every model with its own measured evidence. Nothing leaves the
 The problem text is blurred in the screenshots because M3Kang is for research use only. More screenshots are in
 [`docs/screenshots/`](docs/screenshots/). The board also serves an explainer page for the jury at
 `http://<board-ip>:7000/como-funciona.html` ([source](app/math-coach/assets/como-funciona.html)).
-**TODO (team): add a photo or a short video of the board with the LED matrix and two devices playing.**
+Screenshots of the student and teacher views are in [`docs/screenshots/`](docs/screenshots/).
 
 ## Contents
 
@@ -367,7 +367,7 @@ What we read in it:
 
 ## Team
 
-**TODO (team): names, roles and contacts.**
+Team Impostors (Datathon FME 2026): **Arnau, Biel, Júlia and Carla**. Exam track (Reason) and its model: see the [main README](../README.md).
 
 ## License and credits
 
