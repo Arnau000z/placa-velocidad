@@ -1,6 +1,6 @@
 # La historia
 
-Veintidós horas, del 14/11 a mediodía al 15/11 de madrugada: de un modelo que acertaba como una moneda al aire (21 %) a uno que, con el reloj de la placa, resuelve el 57 % del examen de prueba.
+Veintidós horas, del 14/11 a mediodía al 15/11 a mediodía: de un modelo que acertaba como una moneda al aire (21 %) a uno que, con el reloj de la placa, resuelve el 70 % del examen de prueba (el 80 % de los problemas de texto).
 
 Esta página es el resumen. El cuaderno de laboratorio, hora a hora, está en [cronologia-detallada.md](cronologia-detallada.md).
 
@@ -18,7 +18,7 @@ Esta página es el resumen. El cuaderno de laboratorio, hora a hora, está en [c
 | Exámenes registrados en la nube | 284 (más 49 de la primera campaña) |
 | Problemas sintéticos verificados por ejecución | más de 15.000 |
 | Máquinas alquiladas | 6 (1 RTX PRO 6000 de 96 GB, 1 RTX PRO 6000 Max-Q y 4 RTX 3090) |
-| Del baseline al mejor sistema, en el examen de prueba | 21 % → 57 % |
+| Del baseline al mejor sistema, en el examen de prueba | 21 % → 70 % |
 
 ---
 
@@ -85,6 +85,30 @@ Esta página es el resumen. El cuaderno de laboratorio, hora a hora, está en [c
   - Una pista «perfecta», escrita viendo el error, arregla 30 de 178. Es el techo de cualquier chuleta.
 - **04:45 · Generación masiva dirigida a esos errores:** unas 900 peticiones a cuatro modelos abiertos, con ocho focos sacados del mapa de errores. Ver [datos](05-datos-y-entrenamiento.md).
 
+## Acto 6 · La noche de las sopas (15/11, 05:00-12:00)
+
+- **05:00 · Mezcla v3 (16.313 ejemplos):** v2 más 5.368 problemas generados para las 48 trampas que salieron del mapa de errores. Se entrena en seis máquinas a la vez; la sexta, otra RTX PRO 6000, se alquila para probar el ajuste completo.
+- **05:00 · Reserva E.** Cuando las opciones no son números, el modelo afinado contestaba casi siempre A. En train la E es la más frecuente en esos casos: en val, esa vía pasa de 4 a 14 aciertos de 22.
+- **05:05 · La primera sopa.** La media de los pesos de dos LoRA del mismo 1.7B (v2 con lr 1e-4 y con 2e-4) suma 162 en demo + val, frente a 154 del mejor suelto. Los programas que casan aciertan más: promediar quita errores de planteamiento.
+- **05:45 · El vicio de las constantes.** El v3 suelto baja en val. Causa: escribe el triple de programas que acaban en `print(48)` sin calcular nada; esos programas aciertan el 31 % de las veces que casan, frente al 75 % de los que calculan. Venían de 289 ejemplos así en los datos. Arreglos: `predict.py` pide otro programa si el primero solo imprime una constante, y la v4 (17.904) y la v4b (19.984) salen limpias.
+- **06:30-09:05 · Sopas cada vez más grandes**, siempre con la simulación de placa en demo + val:
+
+| Sopa | Demo | Val texto | Suma |
+|---|---|---|---|
+| v2 + v2_lr2e4 | 58 | 104 | 162 |
+| 2 × v2 + 2 × v3 | 60 | 107 | 167 |
+| 2 × v3 + v4 | 69 | 108 | 177 |
+| 2 × v3 + v4 + 2 × v4b | 67 | 113 | 180 |
+| 7 modelos v3 y v4 | 67 | 116 | 183 |
+| **10 modelos v3, v4 y v4b (sopa_z10)** | **70** | **115** | **185** |
+
+- **07:15 · Programa también en los problemas con figura:** en la demo, de 2/20 a 4-6/20.
+- **Lo que no sumó:** el ajuste completo (147-150), el 2B (149-150), el GRPO (tres intentos, igual o peor), el rango 64, el lr 5e-5, exagerar la media y quitar o añadir miembros a la sopa final.
+- **Incidentes.** Dos sopas a la vez dejaron la torre sin RAM (se reescribió la sopa matriz a matriz: de 10 a 4,5 GB y de 5 a 1 minuto). A las 08:15 el disco D se llenó con las carpetas intermedias. A las 08:58 se acabó el saldo de vast.ai y las seis máquinas se pararon.
+- **09:30 · Congelación:** `sopa_z10-Q8_0.gguf` y `predict.py`. Comprobación independiente en el val de texto en castellano (no usado para elegir): todos los afinados ~8 puntos por encima de la base y la sopa final no queda por debajo de ninguno.
+- **09:45 · Regla 11.1 («temperature 0 and a fixed seed»).** Los reintentos iban a temperatura 0,7. Se quitan: 185 → 185, igual y algo más rápido.
+- **10:00-11:50 · Pruebas del sistema congelado.** Problemas de muestra del reto 5/5 con el CSV oficial; 14 casos raros sin una sola caída; dos pasadas idénticas. Val completo (789): **37,1 %** (texto 45,6 %, figura sin imagen 30,3 %). Los 16 fallos de texto de la demo no son por tiempo: con 120 s se recupera 1. Un último LoRA entrenado en la propia torre con datos dirigidos a los fallos de la sopa final no la mejora (178).
+
 ## Lo que aprendimos
 
 1. **En una CPU lenta, el tiempo es la métrica.** Una variante que acierta el 50 % sin límite puede quedarse en el 19 % con el reloj de la placa. Desde las 23:57 todo se mide con ese reloj.
@@ -92,3 +116,6 @@ Esta página es el resumen. El cuaderno de laboratorio, hora a hora, está en [c
 3. **El modelo sabe adónde ir; falla al plantear.** El RAG, las pistas y los ejemplos le dan el método, pero no lo ejecuta mejor. Lo que sí lo mueve es entrenarlo con miles de planteamientos correctos.
 4. **Medir el instrumento antes que el modelo.** El detector de repetidos que no detectaba nada, las descargas cortadas y el servidor que leía en frío solo se vieron al medir cada pieza por separado.
 5. **La demo no es val.** En el examen de prueba los problemas de texto salen 12 puntos más fáciles que en M3Kang. Por eso los candidatos se comparan en los dos.
+6. **Promediar modelos buenos y distintos suma.** Diez LoRA del mismo 1.7B con datos, épocas, lr y semillas distintos, promediados, ganan 20 puntos de suma al mejor de ellos suelto, sin coste en la placa.
+7. **Los datos enseñan también los vicios.** Un 2 % de programas que imprimían la respuesta sin calcular bastó para que el modelo lo copiara.
+8. **Las reglas, al pie de la letra.** Temperatura 0 aunque la semilla fija ya diera determinismo; quitarlo no costó nada.
