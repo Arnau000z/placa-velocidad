@@ -207,3 +207,15 @@ La dificultad no crece de forma limpia con el nivel. Los niveles altos tienen m�
 - **Techo de cualquier chuleta.** Una pista escrita viendo la respuesta y el error exacto (≤10 palabras) arregla 30 de 178: 28 de 126 de planteamiento, 2 de 32 de código y 0 de 19 largos. Una pista recuperada automáticamente daría mucho menos y rompería aciertos.
 
 Esas lecciones son la semilla de la generación dirigida de datos: problemas nuevos en los que la trampa decide la respuesta, con un programa que la evita explícitamente.
+
+## 9. Comprobación independiente (castellano, 103 filas que no se usaron para elegir)
+
+| Modelo | Aciertos |
+|---|---|
+| Qwen3-1.7B base | 34 |
+| 17b_v3 | 41 |
+| **sopa_z10 (modelo final)** | **42** |
+| sopa_z7 | 42 |
+| 17b_lora32_v2 | 43 |
+
+Los modelos ajustados sacan unos 8 puntos más que la base y empatan entre sí. Ningún problema pasa de 52 s simulados.
