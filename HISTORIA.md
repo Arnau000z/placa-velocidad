@@ -13,7 +13,7 @@
 | | |
 |---|---|
 | Del modelo del reto a nuestro sistema, en el examen de prueba (reloj de la placa) | **21 % → 69 %** |
-| En la placa real, con el servicio y el reloj de verdad | **22/26**, 36 s de media por problema, máximo 53,8 s |
+| En la placa real, con el servicio y el reloj de verdad | **22/26 (un 8,5 sobre 10)** y **19/21 en los problemas de solo texto (un 9 sobre 10)**; 36 s de media por problema, máximo 53,8 s |
 | Problemas de M3Kang con opciones fiables tras limpiarlas | del 63 % al **90 %** (4.379 de 4.862) |
 | Programas de entrenamiento, todos verificados ejecutándolos | casi **20.000** (más de 15.000 sintéticos) |
 | Formas de preguntar al modelo probadas | más de 40 |
@@ -113,7 +113,7 @@ La otra mitad del equipo construyó la parte de enseñar. Primero midió lo que 
   - 769 de 792 soluciones traducidas al catalán y al castellano aceptadas (97,1 %).
 
 ### Acto 8 · La última milla en la placa (15/11, 09:45-13:30)
-- **El modelo final llega a la placa** (1,83 GB, md5 comprobado). Prueba con el reloj de verdad: **22/26** en el examen de prueba, 36 s de media, **máximo 53,8 s**, sin calentarse (73 °C).
+- **El modelo final llega a la placa** (1,83 GB, md5 comprobado). Prueba con el reloj de verdad: **22/26 en el examen de prueba, un 8,5 sobre 10, y 19/21 en los problemas de solo texto, un 9 sobre 10**. 36 s de media, **máximo 53,8 s**, sin calentarse (73 °C).
 - **Se instala como servicio oficial** del reto. El comando del jurado, tal cual, acierta los 5 problemas de ejemplo.
 - **Math Coach se integra** en la misma placa, usando el mismo modelo a través de un pequeño puente: un solo modelo en memoria y 2,4 GB libres. Comprobado que **el examen sigue cumpliendo los tiempos con la app encendida** y que la matriz LED responde desde el móvil.
 - **Incidentes:**

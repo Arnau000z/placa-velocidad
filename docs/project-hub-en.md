@@ -113,7 +113,7 @@ Organisers' practice exam (50 problems in English and Catalan), with the board's
 
 ![From chance to the final model](../figuras/progreso.png)
 
-Measured on the board itself (26 practice problems, real service and clock): **22/26, mean 36 s per problem, worst 54 s, none over 60 s**. On M3Kang validation (English and Catalan, text only, never used to choose the model): 116/242 (48%).
+Measured on the board itself (26 practice problems, real service and clock): **22/26 (8.5 out of 10), and 19/21 on the text-only problems (9 out of 10)**; mean 36 s per problem, worst 54 s, none over 60 s. On M3Kang validation (English and Catalan, text only, never used to choose the model): 116/242 (48%).
 
 **Error analysis.**
 - **By topic:** probability 71%, arithmetic 52%, number theory 49%, counting 47%, algebra 44%, geometry 42%, measurement 38%, logic 27%.

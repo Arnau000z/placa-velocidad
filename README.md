@@ -17,7 +17,7 @@ Proyecto del equipo para el **Datathon FME 2026, reto de Qualcomm «Math on the 
 | Media de pesos de tres 1.7B entrenados con las mezclas v3 y v4 | 69 % |
 | **Modelo final: media de pesos de diez 1.7B entrenados con las mezclas v3, v4 y v4b** | **69 %** |
 
-*Simulado con el reloj de la placa (4,6 / 2,7 tokens/s medidos), con el mismo `predict.py` y el mismo GGUF que van a la placa.* **Comprobado después en la placa real** (15/11): 22/26 problemas del examen de prueba, 36 s de media por problema y 54 s como máximo, ninguno por encima de 60 s ([detalle](#verificación-en-la-placa-real-15112026)).
+*Simulado con el reloj de la placa (4,6 / 2,7 tokens/s medidos), con el mismo `predict.py` y el mismo GGUF que van a la placa.* **Comprobado después en la placa real** (15/11): 22/26 problemas del examen de prueba (**un 8,5 sobre 10; un 9 sobre 10 en los problemas de solo texto**, 19/21), 36 s de media por problema y 54 s como máximo, ninguno por encima de 60 s ([detalle](#verificación-en-la-placa-real-15112026)).
 
 > **The full story of the project, and why we think it is original: [HISTORIA.md](HISTORIA.md)** (with an English summary).
 >
@@ -319,7 +319,7 @@ Con el servicio `math-llm` del reto cargando `sopa_z10` y el `predict.py` del eq
 
 | Prueba | Resultado |
 |---|---|
-| 26 problemas del examen de prueba (13 en inglés y 13 en catalán, todos los niveles, 5 con figura) | **22/26**: texto 19/21, figura 3/5; inglés 13/13, catalán 9/13 |
+| 26 problemas del examen de prueba (13 en inglés y 13 en catalán, todos los niveles, 5 con figura) | **22/26, un 8,5 sobre 10**. En los problemas de solo texto, **19/21: un 9 sobre 10**. Figura 3/5; inglés 13/13, catalán 9/13 |
 | Tiempo por problema | media 36,3 s, mediana 35,6 s, **máximo 53,8 s, ninguno por encima de 60 s** |
 | `data/sample_problems.jsonl` del reto, por el servicio real | 5/5, entre 17 y 31 s |
 | Con la app Math Coach encendida a la vez | mismos tiempos (17-25 s en los ejemplos); 2,4 GB de RAM libres |
