@@ -39,7 +39,13 @@ fi
 if [ "$MODO" != "--probar" ]; then
   echo "==> 1/4 Modelo"
   F="$MODELOS/$MODELO"
-  [ -f "$F" ] || mal "falta $F: súbelo desde el PC con  .\\subir_a_placa.ps1 -Extra ...\\$MODELO"
+  if [ ! -f "$F" ]; then
+    URL="https://github.com/Arnau000z/placa-velocidad/releases/download/modelo-final/$MODELO"
+    echo "  no está en $MODELOS: lo bajo de la release del repo (1,83 GB)"
+    mkdir -p "$MODELOS"
+    wget -c -q --show-progress -O "$F.part" "$URL" && mv "$F.part" "$F" \
+      || mal "no se pudo bajar; súbelo desde el PC con  .\\subir_a_placa.ps1 -Extra ...\\$MODELO"
+  fi
   echo "  comprobando md5 (unos 20 s)..."
   m="$(md5sum "$F" | cut -d' ' -f1)"
   [ "$m" = "$MD5" ] || mal "md5 distinto ($m): la copia está mal, vuelve a subirlo"

@@ -66,7 +66,7 @@ python3 predict.py --input examen.jsonl --output respuestas.csv
 
 1. **El modelo no razona en prosa: escribe un programa.** Qwen3-1.7B traduce el enunciado a 5-8 líneas de Python. La CPU las ejecuta en milisegundos y el resultado se casa con una de las cinco opciones. Cuando el programa casa con una opción, acierta el 90 % de las veces.
 2. **El modelo está entrenado para eso.** Un LoRA sobre casi 10.000 problemas con un programa corto **ejecutado y comprobado**. Los problemas vienen de M3Kang, de problemas sintéticos de modelos abiertos y de los aciertos del propio modelo.
-3. **Todo gira en torno al reloj.** El prompt de sistema va en caché y la letra se pide primero (1 token). El presupuesto de tokens se recalcula con la velocidad real, y si el programa no casa hay reintentos y una reserva por la mediana. Siempre sale una letra antes de 60 s.
+3. **Todo gira en torno al reloj.** El prompt de sistema va en caché y la letra se pide primero (1 token). El presupuesto de tokens se recalcula con la velocidad real. Si el programa no casa con ninguna opción, se usa la reserva: la mediana de las opciones si son números, o E. Siempre sale una letra antes de 60 s, con temperatura 0 y semilla fija.
 
 ```mermaid
 flowchart LR
@@ -76,12 +76,63 @@ flowchart LR
     P --> X[Ejecutar]
     X --> C{¿Casa con<br/>una opción?}
     C -- sí --> R[Respuesta]
-    C -- no --> P2[Reintento o<br/>mediana]
+    C -- no --> P2[Reserva:<br/>mediana o E]
     P2 --> R
     D -- sí --> R
 ```
 
 ![Un problema en 60 segundos](figuras/presupuesto_tiempo.png)
+
+## Arquitectura
+
+```mermaid
+flowchart TB
+    subgraph Placa["Arduino UNO Q 4 GB · sin red"]
+        subgraph Linux["Linux · Qualcomm QRB2210, 4× Cortex-A53"]
+            P["predict.py del equipo<br/>(solo biblioteca estándar)"]
+            S["llama-server · servicio math-llm<br/>sopa_z10-Q8_0.gguf, 1,83 GB"]
+            X["Subproceso Python<br/>ejecuta el programa del modelo<br/>(256 MB, límite de tiempo)"]
+            T["data/train.jsonl<br/>detector de repetidos"]
+            P <-->|"HTTP 127.0.0.1:8081<br/>letra y programa"| S
+            P --> X
+            P --> T
+        end
+        M["Microcontrolador STM32<br/>(no se usa)"]
+    end
+    J["examen.jsonl"] --> P --> R["respuestas.csv<br/>una letra por problema"]
+```
+
+- **Todo corre en la parte Linux.** El microcontrolador no interviene: el reto se puntúa con `predict.py` y el cuello de botella es la CPU.
+- **Un solo modelo en memoria:** el servicio oficial `math-llm`, con los ajustes del reto (contexto de 4.096 tokens, 4 hilos, `--reasoning off`). El servicio de embeddings sigue instalado, pero nuestro `predict.py` no lo usa.
+- **Cómo usamos M3Kang:**
+  1. **Como fábrica de entrenamiento.** Programas verificados por ejecución para sus problemas de texto, y problemas suyos como referencia de estilo para generar miles de problemas nuevos.
+  2. **Como banco de repetidos.** El Canguro repite problemas entre niveles; si llega uno con las mismas opciones, se contesta en 2 ms.
+  3. **Como banco de pruebas.** Val en inglés y catalán, y el análisis de errores por tema, idioma y nivel.
+
+  El RAG con ejemplos parecidos se probó y se descartó: [por qué](docs/07-lo-que-no-funciono.md#rag-con-bge-m3).
+
+## Montarlo en una placa nueva
+
+Desde una UNO Q con los pasos 0-10 del [repositorio del reto](https://github.com/mpous/datathon-UPC-maths-qualcomm-arduino-unoq) hechos y con red:
+```bash
+git clone https://github.com/Arnau000z/placa-velocidad.git ~/placa-velocidad
+cd ~/placa-velocidad && ./instalar_en_placa.sh
+```
+Si el modelo no está en `~/models`, el instalador lo baja de la [*release* `modelo-final`](https://github.com/Arnau000z/placa-velocidad/releases/tag/modelo-final). Las líneas de `config.env` que cambian están en [`config.env.equipo`](config.env.equipo), con el SHA256 del modelo.
+
+## Demo en directo
+
+```bash
+cd ~/placa-velocidad && python3 demo.py
+```
+Pasa por el `predict.py` y el servicio reales 6 problemas inventados por el equipo ([`problemas_demo.jsonl`](problemas_demo.jsonl)), en inglés y catalán. Para cada uno enseña:
+- el enunciado;
+- la letra rápida;
+- el programa que escribe el modelo;
+- lo que imprime al ejecutarlo;
+- la respuesta y los segundos, con un reloj de 60 s.
+
+Con `--seguido` no espera a Enter entre problemas. El guion del pitch está en [docs/pitch.md](docs/pitch.md).
 
 ## Documentación
 
@@ -141,7 +192,15 @@ flowchart LR
 
 ## Datos y licencias
 
-M3Kang tiene licencia **solo para investigación**. Este repositorio **no incluye ningún enunciado, imagen ni índice de M3Kang**, solo identificadores de problema y resultados agregados. Los datos de entrenamiento y los modelos entrenados se quedan fuera del repositorio.
+- **Código:** licencia [MIT](LICENSE).
+- **M3Kang:** licencia **solo para investigación**. Este repositorio **no incluye ningún enunciado, imagen ni índice de M3Kang**, solo identificadores de problema y resultados agregados. Ficha del dataset: [qualcomm/M3Kang](https://huggingface.co/datasets/qualcomm/M3Kang). Cita: Torres-Camps et al., 2026, [arXiv:2601.16218](https://arxiv.org/abs/2601.16218).
+- **Lo que queda fuera:** los datos de entrenamiento y los modelos intermedios. El modelo final está en la *release*.
+
+## Equipo
+
+- *(nombres por completar)*
+
+Reto de Qualcomm del Datathon FME 2026 (UPC).
 
 ## Estado (15/11/2026, 09:30): modelo congelado
 
