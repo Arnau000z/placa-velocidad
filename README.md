@@ -26,6 +26,40 @@ Proyecto del equipo para el **Datathon FME 2026, reto de Qualcomm «Math on the 
 > - **Getting the best result:** `predict.py` warms the model up by itself before the first problem (the first, cold read of the system prompt takes 71-78 s and is not counted). Boot the board 2 minutes earlier, stop Math Coach and anything else using the model, keep the official service settings and the Q8_0 model, and run the whole exam in one go: [checklist](#antes-de-ejecutar-el-examen-calentamiento-y-cómo-sacar-el-mejor-resultado).
 > - **Results and error analysis** by topic, language, level and cause: [below](#análisis-de-errores-tema-idioma-nivel-y-causa) and in [docs/06-resultados.md](docs/06-resultados.md). The rest of this README is in Spanish.
 
+## For the jury: evaluate our system on your own board (5 commands)
+
+*Para el jurado: cómo evaluar nuestro sistema en vuestra propia placa.*
+
+**You need:** an Arduino UNO Q 4 GB set up with **steps 0-10 of the [challenge repository](https://github.com/mpous/datathon-UPC-maths-qualcomm-arduino-unoq)** (llama.cpp `2cbe0ec` built and the `math-llm` / `math-embed` services installed), internet for the first install (it downloads our 1.83 GB model), about 2.5 GB of free disk, and the board's `sudo` password.
+
+```bash
+# 1. Get our code
+git clone https://github.com/Arnau000z/placa-velocidad.git ~/placa-velocidad
+cd ~/placa-velocidad
+
+# 2. Install our model and predict.py, and test them (asks for sudo once)
+./instalar_en_placa.sh
+```
+The installer: **(1)** downloads `sopa_z10-Q8_0.gguf` from our [release](https://github.com/Arnau000z/placa-velocidad/releases) and checks its md5; **(2)** sets `LLM_FILE=sopa_z10-Q8_0.gguf` in the challenge's `config.env` (keeping `config.env.orig`); **(3)** reinstalls the official services with the challenge's own `board/04_install_services.sh`; **(4)** copies our `predict.py` into the challenge repository (keeping `predict_oficial.py`); and runs 6 problems through the real service. It must end with **`BIEN: ningún problema pasa de 60 s`** ("OK: no problem over 60 s"). If your challenge repository is not in `~/datathon-UPC-maths-qualcomm-arduino-unoq`, run it as `DATOS=/path/to/that/repo/data ./instalar_en_placa.sh`.
+
+```bash
+# 3. Check the model is loaded (wait ~20 s after a reboot)
+curl -s 127.0.0.1:8081/health; echo        # {"status":"ok"}
+
+# 4. Run the hidden test exactly as with the baseline
+cd ~/datathon-UPC-maths-qualcomm-arduino-unoq
+python3 predict.py --input exam.jsonl --output answers.csv
+
+# 5. (After the evaluation, optional) go back to the challenge's model and predict.py
+cd ~/placa-velocidad && ./instalar_en_placa.sh --deshacer
+```
+
+**To get the result we measured** (details in the [checklist below](#antes-de-ejecutar-el-examen-calentamiento-y-cómo-sacar-el-mejor-resultado)):
+- `predict.py` **warms up by itself** before the first problem: it waits for the server and loads the system prompt into the server's cache. That takes about 1 minute and **is not counted** for any problem. Run the whole test in **one** `predict.py` call.
+- Make sure **nothing else uses the model** during the test: the server answers one request at a time.
+- Keep the official service settings and the **Q8_0** model; the input must be the challenge's JSONL format, with the options as text.
+- Expect about **36 s per problem** (maximum measured 53.8 s), so 20 problems take about 12-15 minutes. Temperature 0 and a fixed seed: the same input always gives the same answers.
+
 ## Entregables del reto
 
 | Entregable (Step 15 del reto) | Dónde | Estado |

@@ -6,6 +6,15 @@ Proyecto del equipo Impostors para el reto de Qualcomm «Math on the Edge» (Dat
 
 Responde al usuario en su idioma (el equipo trabaja en castellano y catalán).
 
+## Si la placa es nueva (por ejemplo, la del jurado): instala primero
+
+Si `grep -o '\-m [^ ]*' /etc/systemd/system/math-llm.service` no dice `sopa_z10-Q8_0.gguf`, el sistema del equipo no está instalado en esa placa: `predict.py` funcionaría con el modelo del reto y acertaría mucho menos. Instálalo antes de evaluar (necesita los pasos 0-10 del reto hechos, internet y que una persona teclee la contraseña de `sudo`):
+```bash
+git clone https://github.com/Arnau000z/placa-velocidad.git ~/placa-velocidad
+cd ~/placa-velocidad && ./instalar_en_placa.sh      # debe terminar en «BIEN: ningún problema pasa de 60 s»
+```
+Si el repo del reto no está en `~/datathon-UPC-maths-qualcomm-arduino-unoq`: `DATOS=/ruta/al/repo/data ./instalar_en_placa.sh`.
+
 ## Si te piden ejecutar el examen (o cualquier evaluación) en la placa: hazlo así, siempre
 
 1. **Comprueba que el modelo está listo** antes de nada:
