@@ -4,7 +4,7 @@ Veintidós horas, del 14/11 a mediodía al 15/11 a mediodía: de un modelo que a
 
 Esta página es el resumen. El cuaderno de laboratorio, hora a hora, está en [cronologia-detallada.md](cronologia-detallada.md).
 
-![Del azar al 57 %](../figuras/progreso.png)
+![Del azar al 70 %](../figuras/progreso.png)
 
 ## En cifras
 

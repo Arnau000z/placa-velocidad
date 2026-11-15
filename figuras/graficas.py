@@ -59,8 +59,10 @@ barras_h("progreso", [
     ("predict.py + Qwen3-1.7B sin entrenar", 37),
     ("+ LoRA r32, dataset total", 51),
     ("+ LoRA r32, mezcla v2 (9.603 ejemplos)", 57),
-], "Del azar al 57 %", "Examen de prueba de la organización (100 filas), simulado a 4,6 / 2,7 tok/s", xmax=70,
-    colores=[NEUTRO, SERIE[0], SERIE[0], SERIE[0]],
+    ("+ sopa de 2 LoRA v2", 58),
+    ("+ datos dirigidos a los fallos y sopa de 10 LoRA (final)", 70),
+], "Del azar al 70 %", "Examen de prueba de la organización (100 filas), simulado a 4,6 / 2,7 tok/s", xmax=80,
+    colores=[NEUTRO, SERIE[0], SERIE[0], SERIE[0], SERIE[0], SERIE[0]],
     nota="La letra directa no depende de la velocidad (1 token). Azar = 20 %.")
 
 # 2. Rejilla de variantes de prompt (349 problemas de texto de val, 1.7B Q8, sin límite de tiempo)
