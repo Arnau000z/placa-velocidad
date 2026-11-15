@@ -24,6 +24,28 @@ Proyecto del equipo para el **Datathon FME 2026, reto de Qualcomm «Math on the 
 > - **Teach:** [Math Coach](teach/README.md), an App Lab app served by the board to the classroom (port 7000): Kangaroo problems at each student's level, a hint ladder that never gives the answer away (similar easier solved problem from an M3Kang map, then topic and method, then one sentence from the same model, filtered by code), tests, lessons, live games, a teacher's skills map, and a tick/cross and the level on the LED matrix.
 > - **Results and error analysis** by topic, language, level and cause: [below](#análisis-de-errores-tema-idioma-nivel-y-causa) and in [docs/06-resultados.md](docs/06-resultados.md). The rest of this README is in Spanish.
 
+## Cómo responde el proyecto al reto
+
+El reto pide un copiloto que **haga las dos cosas** dentro de la placa: **Reason** (acertar el test oculto) y **Teach** (guiar al alumno sin darle la respuesta). Nuestra respuesta son dos piezas que comparten la misma placa y **el mismo modelo**: `sopa_z10` para razonar y **Math Coach** para enseñar.
+
+| Lo que pide el reto | Cómo lo resolvemos | La prueba |
+|---|---|---|
+| **Reason:** elegir la respuesta correcta en un test oculto | `sopa_z10` (Qwen3-1.7B + LoRA, media de 10 entrenamientos) escribe un programa de Python, la placa lo ejecuta y el resultado se casa con las opciones ([`equipo/predict.py`](equipo/predict.py)) | 69 % en el examen de prueba con el reloj de la placa (línea base 21 %); **22/26 en la placa real**; 48 % en val, que nunca se usó para elegir |
+| **Teach:** guiar sin dar la respuesta (pistas, práctica adaptativa, análisis de errores, interacción, colaboración) | **Math Coach** ([`teach/`](teach/README.md)): escalera de 4 pistas, entrenador adaptativo por nivel, tests, 396 lecciones paso a paso, juegos en directo por equipos y mapa de habilidades para el docente | La pista 3 revelaba la respuesta el 6,3 % de las veces en el primer intento y **ninguna llega al alumno** tras los filtros; la pista 1 nunca tiene el mismo valor que la respuesta; los alumnos simulados se estabilizan en su nivel; 4 alumnos a la vez, 50 ms por respuesta |
+| **Todo dentro de la placa, sin red** | Servicio oficial `math-llm` con llama.cpp; Math Coach llega al modelo por un puente local (`172.17.0.1` → `127.0.0.1`), nunca por la Wi-Fi | La Wi-Fi solo sirve para que los móviles del aula abran la web de la placa |
+| **60 s por problema y 4 GB de RAM** | Caché del prompt de sistema, presupuesto de tokens según el tiempo que queda, parada al cerrar el código; **un solo modelo en memoria** para examen y clase | Máximo 53,8 s en la placa; el servidor ocupa 2,3 GB y quedan 2,4 GB libres con Math Coach encendido |
+| **Usar M3Kang de forma original** | Como **fábrica de entrenamiento** (programas verificados por ejecución), como **mapa por significado** (810 problemas, embeddings bge-m3, 24 familias) del que salen la pista 1 y la práctica, como **banco de lecciones** y como **banco de pruebas** | Del 37 % al 69 % entrenando con programas verificados; las familias del mapa agrupan problemas del mismo tema |
+| **Usar la placa: matriz LED** | El microcontrolador muestra ✓ o ✗ al responder y el nivel del alumno (sketch de [`teach/app/math-coach/sketch/`](teach/app/math-coach/sketch/)) | Se ve en la demo en directo |
+| **Medirlo y analizar los errores** por tema, idioma y dificultad | Todas las pruebas registradas en CSV y analizadas | [Análisis de errores](#análisis-de-errores-tema-idioma-nivel-y-causa) y [docs/06-resultados.md](docs/06-resultados.md) |
+
+**Los obstáculos que tuvo que superar `sopa_z10`**, uno a uno:
+1. **Una CPU que escribe 2,7 tokens por segundo:** en 60 s no cabe un razonamiento en prosa. → El modelo escribe un programa de ~50 tokens y la placa hace las cuentas en milisegundos.
+2. **Un modelo pequeño que plantea mal:** el 1.7B sin entrenar acertaba el 37 %. → LoRA con ~20.000 problemas cuyo programa se **ejecutó** para comprobar que da la respuesta correcta, y la media de los pesos de 10 entrenamientos: 69 %.
+3. **El reloj:** sin caché, el primer problema tardaba 71-78 s. → Prompt de sistema fijo que el servidor reaprovecha, calentamiento antes del primer problema y presupuesto de tokens según el tiempo que queda.
+4. **El catalán:** 14 puntos por detrás en el examen de prueba. → Datos de entrenamiento dirigidos al catalán: la distancia en val baja a 6 puntos.
+5. **Las figuras:** el modelo no las ve. → Letra de reserva; son el 20 % del examen y el límite honesto del sistema.
+6. **Las reglas del reto:** temperatura 0 y semilla fija. → Sin reintentos aleatorios: el mismo examen da siempre las mismas respuestas.
+
 ## Probar el sistema completo en la placa (3 pasos)
 
 Hace falta la placa con el repo del reto ya montado (pasos 0-10 de su README) y conectada por USB-C al PC.
