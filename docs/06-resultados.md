@@ -173,7 +173,7 @@ Por longitud del enunciado: **menos de 40 palabras, 61 %**; entre 40 y 80, 33 %;
 | Líder, demo (simulación de placa) | **60 %** | **54 %** | — |
 | Líder, val texto (simulación de placa) | **42,3 %** | **33,3 %** | — |
 
-En catalán se pierden **6-9 puntos**. Por eso la generación masiva lleva un 40 % de problemas en catalán y un foco solo en catalán.
+Con el líder de la madrugada, en catalán se perdían **6-9 puntos**; con el modelo final, 6-14 en la demo y 6 en val. Por eso la generación masiva lleva un 40 % de problemas en catalán y un foco solo en catalán.
 
 ### Por nivel (líder, simulación de placa)
 
