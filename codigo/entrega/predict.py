@@ -312,6 +312,10 @@ def reserva(opts, letra_modelo):
         vals = {k: parse_value(v) for k, v in opts.items()}
         if all(v is not None for v in vals.values()) and len(set(vals.values())) == 5:
             return sorted(LETTERS, key=lambda k: vals[k])[2], "mediana"
+    # Opciones de texto (o números repetidos): la E. En M3Kang-train es la letra más frecuente en esos casos (23 % frente
+    # al 20 % de la A que dice siempre el modelo afinado); en val de texto eng+cat, vía letra: E 12/22 frente a A 4/22.
+    if RESERVA_TEXTO != "modelo":
+        return RESERVA_TEXTO, "letra_" + RESERVA_TEXTO
     return letra_modelo or os.environ.get("FALLBACK_ANSWER", "D"), "letra"
 
 
@@ -342,11 +346,12 @@ def resolver(pr, llm, huellas, limite):
         pass
     traza["letra"] = letra_modelo
     # 2) problemas con figura: el programa no puede verla; nos quedamos con la letra (ahorra ~40 s)
-    if pr.get("text_only") is False and os.environ.get("FIGURA_PROGRAMA") != "1":
+    if pr.get("text_only") is False and os.environ.get("FIGURA_PROGRAMA", "1") != "1":  # 15/11: con la sopa, figura 2/20 → 4/20
         a, via = reserva(opts, letra_modelo)
         return a, via + "_figura", traza
     # 3) programa con el mismo prompt que la letra (caché: no se relee el enunciado) y parada al cerrar el bloque.
     #    Si no casa y queda tiempo, otro intento muestreado (los programas buenos son cortos: ~50 tokens, ~18 s).
+    constante = None
     for intento in range(1 + REINTENTOS):
         disponibles = restante() - 4  # 4 s para ejecutar el programa y casar
         n_pred = int(min(220, disponibles * llm.tps_out))
@@ -360,16 +365,32 @@ def resolver(pr, llm, huellas, limite):
             out = run_code(code, min(3.0, max(1.0, restante() - 1)))
             traza.setdefault("salidas", []).append(out[-300:])
             letra = match_option(out, opts)
+            if letra and RECHAZA_CONSTANTE and imprime_constante(code):
+                # el programa no calcula: acaba en print(48). Casan y aciertan solo el 31 % (63/205 en las simulaciones)
+                # frente al 75 % de los que calculan → se guarda como candidata y se pide otro programa
+                constante = constante or letra
+                continue
             if letra:
                 return letra, "python" if intento == 0 else f"python{intento + 1}", traza
         except Exception as exc:  # noqa: BLE001
             traza["error"] = type(exc).__name__
+    if constante:
+        return constante, "python_constante", traza
     a, via = reserva(opts, letra_modelo)
     return a, via, traza
 
 
 RESERVA = os.environ.get("RESERVA", "mediana")
+RECHAZA_CONSTANTE = os.environ.get("RECHAZA_CONSTANTE", "1") == "1"
+_CONSTANTE = re.compile(r"print\(\s*(-?\d+(\.\d+)?|\"[^\"]*\"|'[^']*')\s*\)")
+
+
+def imprime_constante(code):
+    """¿La última línea del programa imprime un literal (no calcula)?"""
+    lineas = [x.strip() for x in (code or "").splitlines() if x.strip()]
+    return bool(lineas) and bool(_CONSTANTE.fullmatch(lineas[-1]))
 REINTENTOS = int(os.environ.get("REINTENTOS", "2"))
+RESERVA_TEXTO = os.environ.get("RESERVA_TEXTO", "E")  # letra de reserva si las opciones no son 5 números distintos; "modelo" = la del modelo
 PISTAS = {}  # experimento: PISTAS=<jsonl con {id, pista}> → "Hint: ..." tras las opciones (apagado si no se da)
 try:
     if os.environ.get("PISTAS"):
