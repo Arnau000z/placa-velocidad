@@ -19,6 +19,8 @@ Proyecto del equipo para el **Datathon FME 2026, reto de Qualcomm «Math on the 
 
 *Simulado con el reloj de la placa (4,6 / 2,7 tokens/s medidos), con el mismo `predict.py` y el mismo GGUF que van a la placa.* **Comprobado después en la placa real** (15/11): 22/26 problemas del examen de prueba, 36 s de media por problema y 54 s como máximo, ninguno por encima de 60 s ([detalle](#verificación-en-la-placa-real-15112026)).
 
+> **The full story of the project, and why we think it is original: [HISTORIA.md](HISTORIA.md)** (with an English summary).
+>
 > **In English.** Our entry for the Qualcomm "Math on the Edge" challenge (Datathon FME 2026) does both things the challenge asks for, fully offline on one Arduino UNO Q 4 GB:
 > - **Reason:** a Qwen3-1.7B fine-tuned with LoRA (an average of 10 runs, `sopa_z10`, GGUF Q8_0) does not reason in prose: it writes a short Python program that the board runs and matches against the five options. 69% on the organisers' practice exam with the board's clock (baseline 21%), 22/26 verified on the real board, every problem under 60 s. Entry point: [`equipo/predict.py`](equipo/predict.py); installer: [`instalar_en_placa.sh`](instalar_en_placa.sh); model: the [`modelo-final` release](https://github.com/Arnau000z/placa-velocidad/releases).
 > - **Teach:** [Math Coach](teach/README.md), an App Lab app served by the board to the classroom (port 7000): Kangaroo problems at each student's level, a hint ladder that never gives the answer away (similar easier solved problem from an M3Kang map, then topic and method, then one sentence from the same model, filtered by code), tests, lessons, live games, a teacher's skills map, and a tick/cross and the level on the LED matrix.
@@ -64,6 +66,7 @@ cd ~/placa-velocidad && ./instalar_en_placa.sh --deshacer
 
 | Entregable (Step 15 del reto) | Dónde | Estado |
 |---|---|---|
+| **La historia del proyecto** (qué hicimos, por qué es original, vast.ai, Teach, la placa) | [HISTORIA.md](HISTORIA.md) | ✅ |
 | **Repositorio público en GitHub** | este repositorio: <https://github.com/Arnau000z/placa-velocidad> | ✅ público |
 | **Texto en Arduino Project Hub** | enviado el 15/11/2026: <https://projecthub.arduino.cc/projects/4cd45721-2a96-45e8-bc74-d6429d50f2ba/preview> | ⏳ **en revisión por los moderadores de Arduino**. Hasta que lo aprueben, ese enlace solo lo ve el equipo. Copia completa aquí: [docs/project-hub-en.md](docs/project-hub-en.md) |
 | **`predict.py` para el test oculto** | [`equipo/predict.py`](equipo/predict.py), instalado en la placa con [`instalar_en_placa.sh`](instalar_en_placa.sh) | ✅ verificado en la placa real |
@@ -169,7 +172,7 @@ python3 predict.py --input examen.jsonl --output respuestas.csv
 | Qué es | La media de los pesos de 10 Qwen3-1.7B entrenados con LoRA r32 (mezclas v3, v4 y v4b), exportada a GGUF Q8_0 |
 | Dónde está | Adjunto a la *release* [`modelo-final`](https://github.com/Arnau000z/placa-velocidad/releases) de este repositorio (copia del equipo en `D:\Datathon_A\modelos_entrenados\`) |
 
-![Del azar al 57 %](figuras/progreso.png)
+![Del azar al 69 %](figuras/progreso.png)
 
 ## Teach: Math Coach, la plataforma de clase en la placa
 

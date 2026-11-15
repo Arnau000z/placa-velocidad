@@ -1,6 +1,6 @@
 # La historia
 
-Veintidós horas, del 14/11 a mediodía al 15/11 a mediodía: de un modelo que acertaba como una moneda al aire (21 %) a uno que, con el reloj de la placa, resuelve el 70 % del examen de prueba (el 80 % de los problemas de texto).
+Veintidós horas, del 14/11 a mediodía al 15/11 a mediodía: de un modelo que acertaba como una moneda al aire (21 %) a uno que, con el reloj de la placa, resuelve el 69 % del examen de prueba con el `predict.py` congelado a temperatura 0 (70 % con los reintentos a 0,7 que se quitaron por la regla 11.1) (el 80 % de los problemas de texto).
 
 Esta página es el resumen. El cuaderno de laboratorio, hora a hora, está en [cronologia-detallada.md](cronologia-detallada.md).
 
