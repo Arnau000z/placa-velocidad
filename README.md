@@ -416,7 +416,7 @@ Más de la mitad del trabajo fue descartar ideas con datos; la lista completa, c
 
 Equipo Impostors:
 
-- Arnau Mas
+- Arnau Mas · [LinkedIn](https://www.linkedin.com/in/arnau000z) · [GitHub](https://github.com/Arnau000z)
 - Carla Núñez
 - Biel Merino
 - Júlia Pérez
