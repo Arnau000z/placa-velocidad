@@ -414,12 +414,14 @@ Más de la mitad del trabajo fue descartar ideas con datos; la lista completa, c
 
 ## Equipo
 
-- Arnau
-- Carla
-- Biel
-- Júlia
+Equipo Impostors:
 
-Reto de Qualcomm del Datathon FME 2026 (UPC).
+- Arnau Mas
+- Carla Núñez
+- Biel Merino
+- Júlia Pérez
+
+Reto de Qualcomm del Datathon FME 2026 (UPC). El proyecto lo hicimos los cuatro juntos, en local, durante el datathon; la entrega y los commits se subieron desde una sola cuenta.
 
 ## Estado final (15/11/2026, 12:30): placa lista para el examen
 
