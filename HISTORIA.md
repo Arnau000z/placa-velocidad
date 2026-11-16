@@ -1,6 +1,6 @@
 # La historia del proyecto
 
-**Equipo Impostors** (Arnau, Biel, Júlia y Carla) · Datathon FME 2026 · reto de Qualcomm y Arduino **«Math on the Edge»** · 14-15 de noviembre de 2026.
+**Equipo Impostors** (Arnau Mas, Biel Merino, Júlia Pérez y Carla Núñez) · Datathon FME 2026 · reto de Qualcomm y Arduino **«Math on the Edge»** · 14-15 de noviembre de 2026.
 
 > **In English, in one paragraph.** In 24 hours we went from a model that answered Math Kangaroo problems like a coin toss (21%) to a system that, inside an Arduino UNO Q and with its real clock, solves 69% of the organisers' practice exam (22/26 verified on the real board, every problem under 60 s). The key idea: a small model can't reason in prose at 2.7 tokens per second, but it can write a five-line Python program that the board runs in milliseconds. We trained it on almost 20,000 programs that were **executed to check they print the right answer**, averaged 10 fine-tuned models into one ("model soup"), and measured every decision with the board's clock. We rented six GPUs on vast.ai at once, driven by an automatic watcher, and used open models to manufacture data. The same model powers **Math Coach**, a classroom platform served by the board to students' phones: a hint ladder that never gives the answer away, a teacher dashboard that reads the whole class, and a tick or a cross on the LED matrix.
 
